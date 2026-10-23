@@ -1,0 +1,230 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import CTABand from '../../components/CTABand.astro';
+import Figure from '../../components/Figure.astro';
+import Icon from '../../components/Icon.astro';
+import Button from '../../components/Button.astro';
+import { articles, type Article } from '../../data/articles';
+import { articleContentBySlug, type ArticleContent } from '../../data/article-content';
+import { site } from '../../data/site';
+
+export function getStaticPaths() {
+  return articles.map((article: Article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props as { article: Article };
+const content = articleContentBySlug[article.slug] as ArticleContent | undefined;
+
+if (!content) {
+  throw new Error(`Missing article content: ${article.slug}`);
+}
+
+const slugify = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+const sections = content.blocks
+  .filter((block): block is { type: 'h2'; text: string } => block.type === 'h2')
+  .map((block) => ({ id: slugify(block.text), title: block.text }));
+
+const related = articles.filter((item) => item.slug !== article.slug).slice(0, 3);
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: article.title,
+  description: article.excerpt,
+  datePublished: article.dateISO,
+  dateModified: article.dateISO,
+  articleSection: article.category,
+  image: new URL(`/images/${article.image}-1800.webp`, Astro.site).href,
+  author: {
+    '@type': 'Organization',
+    name: site.legalName,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: site.legalName,
+    logo: {
+      '@type': 'ImageObject',
+      url: new URL('/icon-512.png', Astro.site).href,
+    },
+  },
+  mainEntityOfPage: new URL(Astro.url.pathname, Astro.site).href,
+};
+---
+
+<BaseLayout title={article.title} description={article.excerpt}>
+  <article>
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+
+    <header class="article-hero">
+      <div class="article-hero__stars" aria-hidden="true"></div>
+      <div class="shell">
+        <nav class="article-hero__crumb" aria-label="Fil d'Ariane">
+          <a href="/">Accueil</a>
+          <span aria-hidden="true">/</span>
+          <a href="/carnet">Carnet</a>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">{article.category}</span>
+        </nav>
+
+        <div class="article-hero__grid">
+          <div>
+            <div class="article-hero__meta">
+              <span>{article.category}</span>
+              <span><time datetime={article.dateISO}>{article.date}</time></span>
+              <span>{article.readTime} de lecture</span>
+            </div>
+            <h1>{article.title}</h1>
+          </div>
+
+          <aside class="article-hero__aside">
+            <p>{article.excerpt}</p>
+            <div class="article-hero__byline">
+              <Icon name="check" size={14} />
+              La maison Maranatha · Bafoussam
+            </div>
+          </aside>
+        </div>
+
+        <figure class="article-cover">
+          <div class="article-cover__frame">
+            <Figure
+              name={article.image}
+              alt={article.imageAlt}
+              sizes="(max-width: 900px) 100vw, 90vw"
+              loading="eager"
+              fetchpriority="high"
+            />
+          </div>
+          <figcaption>{article.imageAlt} — photographie d'illustration.</figcaption>
+        </figure>
+      </div>
+    </header>
+
+    <section class="article-body">
+      <div class="shell article-body__grid">
+        <div class="prose" data-reveal>
+          <p class="article-body__intro">{content.intro}</p>
+
+          {
+            content.blocks.map((block) => {
+              if (block.type === 'h2') {
+                return <h2 id={slugify(block.text)}>{block.text}</h2>;
+              }
+              if (block.type === 'p') {
+                return <p>{block.text}</p>;
+              }
+              if (block.type === 'ul') {
+                return (
+                  <ul>
+                    {block.items.map((item) => (
+                      <li>{item}</li>
+                    ))}
+                  </ul>
+                );
+              }
+              return (
+                <blockquote>
+                  <p>{block.text}</p>
+                </blockquote>
+              );
+            })
+          }
+        </div>
+
+        <aside class="article-side" aria-label="Repères de lecture">
+          {
+            sections.length > 0 && (
+              <div class="article-side__box">
+                <span class="label">Dans cet article</span>
+                <ul>
+                  {sections.map((section) => (
+                    <li>
+                      <a href={`#${section.id}`}>{section.title}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          }
+
+          <div class="article-side__box">
+            <span class="label">À retenir</span>
+            <ul>
+              {content.takeaways.map((takeaway) => (
+                <li>{takeaway}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="article-side__box article-side__meta">
+            <span class="label">La note</span>
+            <p><strong>Publié le</strong> {article.date}</p>
+            <p><strong>Catégorie</strong> {article.category}</p>
+            <p><strong>Temps de lecture</strong> {article.readTime}</p>
+          </div>
+
+          <div class="article-side__cta">
+            <p>Une question sur votre propre dossier ?</p>
+            <Button href="/contact" variant="gold" size="sm" arrow="arrow-up-right">Nous écrire</Button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="page-section page-section--ivory-soft">
+      <div class="shell">
+        <SectionHead
+          index="Suite"
+          label="À lire aussi"
+          title="D'autres notes <em>du carnet.</em>"
+          intro="Trois textes pour prolonger la réflexion, ou pour préparer une conversation avec nous."
+        />
+
+        <div class="journal-grid" data-reveal-group>
+          {
+            related.map((item) => (
+              <article class="article-card">
+                <a class="article-card__media img-zoom" href={`/carnet/${item.slug}`} aria-label={item.title}>
+                  <Figure name={item.image} alt={item.imageAlt} sizes="(max-width: 720px) 100vw, 32vw" />
+                </a>
+                <div class="article-card__meta">
+                  <span>{item.category}</span>
+                  <span>{item.date}</span>
+                  <span>{item.readTime}</span>
+                </div>
+                <h3><a href={`/carnet/${item.slug}`}>{item.title}</a></h3>
+                <p>{item.excerpt}</p>
+                <a class="link-arrow" href={`/carnet/${item.slug}`}>
+                  Lire
+                  <Icon name="arrow-right" size={14} />
+                </a>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <CTABand
+    variant="dawn"
+    eyebrow="Du texte à la pratique"
+    title="Parlons de votre situation."
+    text="Un prix à vérifier, une commande à préparer, un fournisseur à choisir. Le carnet donne des repères ; un échange donne une réponse."
+    primaryLabel="Nous contacter"
+    primaryHref="/contact"
+    secondaryLabel="Demander un devis"
+    secondaryHref="/devis"
+  />
+</BaseLayout>

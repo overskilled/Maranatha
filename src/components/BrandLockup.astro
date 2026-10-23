@@ -1,0 +1,123 @@
+---
+interface Props {
+  variant?: 'horizontal' | 'stacked';
+  class?: string;
+}
+
+const { variant = 'horizontal', class: className } = Astro.props;
+---
+
+<span class:list={['lockup', `lockup--${variant}`, className]}>
+  <svg
+    class="lockup__mark"
+    viewBox="0 0 140 88"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <g transform="translate(0 -8)">
+      <path
+        d="M70 20V86M18 44H122"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="6.5"
+        stroke-linecap="square"></path>
+      <path
+        d="M18 44L8 68M18 44L28 68M122 44L112 68M122 44L132 68"
+        fill="none"
+        stroke="var(--gold)"
+        stroke-width="2.2"></path>
+      <path
+        d="M4 68Q18 83 32 68M108 68Q122 83 136 68"
+        fill="none"
+        stroke="var(--gold)"
+        stroke-width="4.6"
+        stroke-linecap="round"></path>
+      <path d="M70 35L78 44L70 53L62 44Z" fill="var(--gold)"></path>
+    </g>
+  </svg>
+
+  <span class="lockup__type">
+    <span class="lockup__name">Maranatha</span>
+    <span class="lockup__sub">Le Juste Prix</span>
+  </span>
+</span>
+
+<style>
+  .lockup {
+    --lockup-mark: 2.6rem;
+    --lockup-name: 1.34rem;
+    --lockup-sub: 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: inherit;
+    line-height: 1;
+  }
+
+  .lockup__mark {
+    display: block;
+    flex: none;
+    width: var(--lockup-mark);
+    height: auto;
+    overflow: visible;
+  }
+
+  .lockup__type {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    min-width: 0;
+  }
+
+  .lockup__name {
+    font-family: var(--font-display);
+    font-size: var(--lockup-name);
+    font-weight: 500;
+    line-height: 0.9;
+    letter-spacing: -0.025em;
+    white-space: nowrap;
+  }
+
+  .lockup__sub {
+    font-family: var(--font-text);
+    font-size: var(--lockup-sub);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  .lockup--stacked {
+    --lockup-mark: 3.3rem;
+    --lockup-name: 1.85rem;
+    --lockup-sub: 0.62rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  .lockup--stacked .lockup__type {
+    gap: 0.42rem;
+  }
+
+  .lockup--stacked .lockup__sub {
+    letter-spacing: 0.26em;
+  }
+
+  @media (max-width: 720px) {
+    .lockup {
+      --lockup-mark: 2.25rem;
+      --lockup-name: 1.18rem;
+      --lockup-sub: 0.49rem;
+      gap: 0.65rem;
+    }
+
+    .lockup--stacked {
+      --lockup-mark: 2.9rem;
+      --lockup-name: 1.6rem;
+      --lockup-sub: 0.56rem;
+    }
+  }
+</style>

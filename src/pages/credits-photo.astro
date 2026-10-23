@@ -1,0 +1,171 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
+
+const wikimedia = [
+  {
+    title: '6. Vue aérienne de la ville de Bafoussam.jpg',
+    author: 'PENdjeng',
+    license: 'CC0',
+    licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+    used: 'Vue aérienne de Bafoussam',
+  },
+  {
+    title: 'Au village Bafoussam.jpg',
+    author: 'Étienne Talla',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    used: 'Scène de village',
+  },
+  {
+    title: 'Bafoussam02.jpg',
+    author: 'Psychilles',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    used: 'Vue de Bafoussam',
+  },
+  {
+    title: 'Gare routière bafoussam- ndiangdam.jpg',
+    author: 'Achking',
+    license: 'CC0',
+    licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+    used: 'Gare routière de Bafoussam',
+  },
+  {
+    title: 'Marché B, Bafoussam.jpg',
+    author: 'Adèlebitga',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    used: 'Marché de Bafoussam',
+  },
+  {
+    title: 'Marché périodique à Bafoussam - Cameroun.jpg',
+    author: 'Geugeor',
+    license: 'CC BY-SA 3.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
+    used: 'Marché périodique',
+  },
+  {
+    title: 'Mon champ 2.jpg',
+    author: 'MEKEM Z. Prosper',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    used: 'Champ en terrasses',
+  },
+  {
+    title: 'Near BEAC, Bafoussam.jpg',
+    author: 'Bamiboi',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    used: 'Rue de Bafoussam',
+  },
+  {
+    title: 'Recolte 1.jpg',
+    author: 'Zacharie Ngnogue',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    used: 'Récolte et portage',
+  },
+  {
+    title: 'Malgré tout 1.jpg',
+    author: 'Zacharie Ngnogue',
+    license: 'CC BY-SA 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    used: 'Scène de vie à Bafoussam',
+  },
+];
+
+const commonsUrl = (title: string) =>
+  `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(title.replace(/ /g, '_'))}`;
+---
+
+<BaseLayout
+  title="Crédits photo"
+  description="Crédits et licences des photographies utilisées sur le site d'Ets Maranatha Le Juste Prix."
+>
+  <section class="legal-hero">
+    <div class="shell">
+      <nav class="legal-hero__crumb" aria-label="Fil d'Ariane">
+        <a href="/">Accueil</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Crédits photo</span>
+      </nav>
+      <h1>Crédits photo</h1>
+      <p>
+        Les photographies de ce site appartiennent à leurs auteurs ou sont utilisées sous licence.
+        Cette page indique leur provenance et permet de retrouver chaque fichier.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-body shell">
+    <aside class="legal-toc" aria-label="Sommaire">
+      <span class="label">Sommaire</span>
+      <ol>
+        <li><a href="#wikimedia">Wikimedia Commons</a></li>
+        <li><a href="#pexels">Pexels</a></li>
+        <li><a href="#marque">Marque et éléments graphiques</a></li>
+      </ol>
+      <p class="legal-toc__updated">Dernière mise à jour : octobre 2026</p>
+    </aside>
+
+    <article class="legal-content prose">
+      <h2 id="wikimedia">Wikimedia Commons</h2>
+      <p>
+        Les photographies suivantes proviennent de Wikimedia Commons. Elles sont utilisées dans le
+        respect de leurs licences respectives. Lorsque l'image a été recadrée ou redimensionnée pour
+        le site, cette adaptation ne modifie pas l'attribution.
+      </p>
+
+      <div class="credit-list">
+        {
+          wikimedia.map((credit) => (
+            <div class="credit-list__item">
+              <strong>{credit.used}</strong>
+              <span>
+                {credit.author} · {credit.license}
+              </span>
+              <a
+                href={commonsUrl(credit.title)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Voir le fichier ${credit.title} sur Wikimedia Commons`}
+              >
+                Fichier source
+              </a>
+            </div>
+          ))
+        }
+      </div>
+
+      <p>
+        Les licences Creative Commons citées sont consultables sur
+        <a href="https://creativecommons.org/licenses/" target="_blank" rel="noopener noreferrer">
+          creativecommons.org/licenses
+        </a>. Pour toute question sur une attribution, écrivez-nous à
+        <a href={site.emailHref}>{site.email}</a>.
+      </p>
+
+      <h2 id="pexels">Pexels</h2>
+      <p>
+        Les autres photographies du site proviennent de Pexels et sont utilisées conformément à la
+        <a href="https://www.pexels.com/license/" target="_blank" rel="noopener noreferrer">
+          licence Pexels
+        </a>. Cette licence permet l'utilisation gratuite des images, y compris à des fins
+        commerciales, sans attribution obligatoire. Nous créditons néanmoins la plateforme par
+        transparence.
+      </p>
+
+      <h2 id="marque">Marque et éléments graphiques</h2>
+      <p>
+        Le nom « Maranatha Le Juste Prix », le symbole de la croix-balance, le sceau et les
+        compositions graphiques du site sont des éléments de la maison. Ils ne peuvent pas être
+        reproduits ou utilisés comme signe distinctif sans autorisation écrite.
+      </p>
+      <p>
+        Les polices de caractères utilisées sont Arimo (SIL Open Font License) et IBM Plex Serif
+        (SIL Open Font License). Elles sont servies localement depuis le site.
+      </p>
+    </article>
+  </section>
+</BaseLayout>

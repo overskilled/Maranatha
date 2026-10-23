@@ -1,0 +1,23 @@
+---
+interface Props {
+  index: string;
+  label: string;
+  title: string;
+  intro?: string;
+  stacked?: boolean;
+  class?: string;
+}
+
+const { index, label, title, intro, stacked = false, class: className } = Astro.props;
+---
+
+<div class:list={['section-head', stacked && 'section-head--stacked', className]}>
+  <p class="section-head__index">
+    <span>{index}</span>
+    {label}
+  </p>
+  <div class="section-head__body">
+    <h2 set:html={title} data-reveal />
+    {intro && <p class="section-head__intro" set:html={intro} data-reveal />}
+  </div>
+</div>

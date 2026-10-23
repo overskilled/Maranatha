@@ -1,0 +1,471 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import Faq from '../components/Faq.astro';
+import Button from '../components/Button.astro';
+import Icon from '../components/Icon.astro';
+import Seal from '../components/Seal.astro';
+import { site } from '../data/site';
+
+const steps = [
+  {
+    number: '01',
+    title: 'Votre message',
+    text: "Dites-nous ce que vous cherchez, pour quand et pour où. Une liste ou une photo suffit pour commencer.",
+  },
+  {
+    number: '02',
+    title: 'Nos questions',
+    text: "Nous revenons avec les précisions utiles : quantité, qualité, lieu de livraison, budget.",
+  },
+  {
+    number: '03',
+    title: 'La proposition',
+    text: "Un devis ou une réponse claire, avec ce qui est inclus, le prix et le délai.",
+  },
+  {
+    number: '04',
+    title: 'Le suivi',
+    text: "Si vous validez, un interlocuteur suit la commande jusqu'à la remise.",
+  },
+];
+
+const faqs = [
+  {
+    question: 'Faut-il prendre rendez-vous avant de passer ?',
+    answer:
+      "Nous vous recommandons d'appeler ou d'écrire avant votre passage afin de confirmer le lieu exact, l'heure et la personne disponible. Cela évite un déplacement inutile.",
+  },
+  {
+    question: 'Puis-je commander par WhatsApp ?',
+    answer:
+      "Oui, WhatsApp est un bon point de départ pour une photo, une liste ou une question. Pour une commande importante, nous confirmons le périmètre et le prix dans un devis écrit.",
+  },
+  {
+    question: 'Répondez-vous le dimanche ?',
+    answer:
+      "Nos horaires d'ouverture sont du lundi au samedi, de 8h à 18h. Les messages reçus en dehors de ces horaires sont lus au prochain jour ouvré.",
+  },
+  {
+    question: 'Livrez-vous en dehors de Bafoussam ?',
+    answer:
+      "Oui, nous étudions les livraisons dans d'autres villes du Cameroun. Le transport est chiffré selon la distance, le volume et la nature de la marchandise.",
+  },
+  {
+    question: 'Que faites-vous de mes informations ?',
+    answer:
+      "Elles servent uniquement à traiter votre demande. Nous ne les vendons pas et ne les partageons pas avec des tiers non concernés. Voir notre page Confidentialité pour les détails et vos droits.",
+  },
+];
+
+const subjects = [
+  'Commerce général',
+  'Import-export',
+  'Agriculture & élevage',
+  'Transport',
+  'BTP',
+  'Services',
+  'Autre demande',
+];
+---
+
+<BaseLayout
+  title="Contact"
+  description="Contactez Ets Maranatha Le Juste Prix à Bafoussam : téléphone, WhatsApp, e-mail ou formulaire. Commerce, import-export, agriculture, transport, BTP et services."
+>
+  <PageHero
+    index="05"
+    label="Contact"
+    title="La porte est <em>ouverte.</em>"
+    lede="Une question, une commande, un chantier à préparer ? Écrivez-nous ou appelez-nous. Nous préférons une conversation précise à une promesse vague."
+    image="shopkeeper-counter"
+    imageAlt="Commerçante derrière son étal de produits divers"
+    imageCaption="Au comptoir, Bafoussam."
+    imagePosition="50% 40%"
+    meta={[
+      { label: 'Téléphone', value: site.phoneDisplay },
+      { label: 'WhatsApp', value: site.whatsappDisplay },
+      { label: 'Horaires', value: site.hours },
+    ]}
+    primary={{ label: 'Écrire un message', href: '#formulaire' }}
+    secondary={{ label: 'Demander un devis', href: '/devis' }}
+  />
+
+  <section class="page-section" id="formulaire">
+    <div class="shell contact-layout">
+      <div class="contact-copy" data-reveal>
+        <p class="eyebrow">Nous joindre</p>
+        <h2>Choisissez le canal <em>qui vous convient.</em></h2>
+        <p>
+          Le téléphone pour une question rapide, WhatsApp pour une photo ou une liste, l'e-mail pour
+          un dossier à transmettre. Dans tous les cas, une personne de la maison suit votre demande.
+        </p>
+
+        <div class="contact-channels">
+          <a class="contact-channel" href={site.phoneHref}>
+            <span class="contact-channel__icon"><Icon name="phone" size={16} /></span>
+            <span>
+              <span class="contact-channel__label">Téléphone</span>
+              <strong>{site.phoneDisplay}</strong>
+            </span>
+            <Icon name="arrow-up-right" size={15} />
+          </a>
+
+          <a
+            class="contact-channel"
+            href={site.whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="contact-channel__icon"><Icon name="whatsapp" size={16} /></span>
+            <span>
+              <span class="contact-channel__label">WhatsApp</span>
+              <strong>{site.whatsappDisplay}</strong>
+            </span>
+            <Icon name="arrow-up-right" size={15} />
+          </a>
+
+          <a class="contact-channel" href={site.emailHref}>
+            <span class="contact-channel__icon"><Icon name="mail" size={16} /></span>
+            <span>
+              <span class="contact-channel__label">E-mail</span>
+              <strong>{site.email}</strong>
+            </span>
+            <Icon name="arrow-up-right" size={15} />
+          </a>
+
+          <div class="contact-channel">
+            <span class="contact-channel__icon"><Icon name="pin" size={16} /></span>
+            <span>
+              <span class="contact-channel__label">Adresse</span>
+              <strong>{site.address}</strong>
+            </span>
+          </div>
+
+          <div class="contact-channel">
+            <span class="contact-channel__icon"><Icon name="clock" size={16} /></span>
+            <span>
+              <span class="contact-channel__label">Horaires</span>
+              <strong>{site.hours}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div class="contact-note">
+          <strong>Avant de passer</strong>
+          La localisation exacte et le point de rendez-vous sont confirmés par téléphone ou WhatsApp.
+          Cela nous permet de vous recevoir au bon endroit, avec la personne qui connaît votre dossier.
+        </div>
+      </div>
+
+      <div class="form-panel" data-reveal>
+        <div class="form-panel__head">
+          <div>
+            <h2>Écrivez-nous.</h2>
+            <p>Les champs marqués d'un astérisque sont nécessaires pour vous répondre.</p>
+          </div>
+          <span class="label">Réponse écrite</span>
+        </div>
+
+        <form
+          data-mailto-form
+          data-email={site.email}
+          data-subject="Contact"
+          action={`mailto:${site.email}`}
+          method="post"
+          enctype="text/plain"
+        >
+          <div class="form-grid">
+            <div class="field">
+              <label for="contact-name">Nom et prénom *</label>
+              <input id="contact-name" name="name" type="text" autocomplete="name" required placeholder="Votre nom" />
+            </div>
+
+            <div class="field">
+              <label for="contact-phone">Téléphone / WhatsApp *</label>
+              <input
+                id="contact-phone"
+                name="phone"
+                type="tel"
+                autocomplete="tel"
+                required
+                placeholder="+237 ..."
+              />
+            </div>
+
+            <div class="field">
+              <label for="contact-email">E-mail</label>
+              <input
+                id="contact-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="vous@exemple.com"
+              />
+            </div>
+
+            <div class="field">
+              <label for="contact-subject">Votre besoin</label>
+              <select id="contact-subject" name="subject">
+                {subjects.map((subject) => <option>{subject}</option>)}
+              </select>
+            </div>
+
+            <div class="field field--full">
+              <label for="contact-message">Message *</label>
+              <textarea
+                id="contact-message"
+                name="message"
+                required
+                placeholder="Dites-nous ce que vous cherchez, la quantité, le lieu et le délai souhaité."
+              ></textarea>
+            </div>
+
+            <div class="field field--full field--check">
+              <input id="contact-consent" name="consent" type="checkbox" required />
+              <label for="contact-consent">
+                J'accepte que mes informations soient utilisées pour répondre à ma demande.
+                Voir la <a href="/confidentialite">politique de confidentialité</a>.
+              </label>
+            </div>
+          </div>
+
+          <div class="actions contact-form__actions">
+            <Button type="submit" variant="dark" arrow="mail">Envoyer le message</Button>
+          </div>
+
+          <p class="form-note">
+            Ce formulaire ouvre votre logiciel de messagerie avec le message pré-rempli. Aucune donnée
+            n'est stockée sur ce site.
+          </p>
+          <p class="form-status" data-form-status hidden role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft">
+    <div class="shell">
+      <SectionHead
+        index="02"
+        label="Bien préparer"
+        title="Un message précis <em>gagne du temps.</em>"
+        intro="Vous n'avez pas besoin d'un dossier complet pour nous écrire. Quelques éléments suffisent pour que notre réponse soit utile dès le premier échange."
+      />
+
+      <div class="prepare-grid" data-reveal-group>
+        <article class="prepare-card">
+          <span class="prepare-card__num">01</span>
+          <h3>Le besoin</h3>
+          <p>Ce que vous cherchez : un produit, une quantité, un transport, des travaux ou un service.</p>
+        </article>
+        <article class="prepare-card">
+          <span class="prepare-card__num">02</span>
+          <h3>Le lieu</h3>
+          <p>Où la marchandise doit être livrée ou le chantier réalisé. Un quartier suffit pour commencer.</p>
+        </article>
+        <article class="prepare-card">
+          <span class="prepare-card__num">03</span>
+          <h3>Le délai</h3>
+          <p>La date souhaitée et ce qui arrive si elle n'est pas tenue. Cela nous aide à dire vrai.</p>
+        </article>
+        <article class="prepare-card">
+          <span class="prepare-card__num">04</span>
+          <h3>Le budget</h3>
+          <p>Une fourchette, même large. Elle permet de proposer une solution réaliste plutôt qu'un prix théorique.</p>
+        </article>
+      </div>
+
+      <div class="contact-process">
+        <SectionHead
+          index="03"
+          label="Ensuite"
+          title="Ce qui se passe <em>après votre message.</em>"
+          intro="Pas de formulaire qui disparaît dans le vide. Voici le chemin que nous suivons."
+        />
+        <ProcessSteps steps={steps} />
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft">
+    <div class="shell faq-split">
+      <div class="faq-split__aside" data-reveal>
+        <p class="eyebrow">Questions pratiques</p>
+        <h2>Avant de <em>nous écrire.</em></h2>
+        <p>
+          Les réponses aux questions les plus courantes. Pour tout le reste, le formulaire ou le
+          téléphone restent ouverts.
+        </p>
+        <div class="actions">
+          <Button href={site.whatsappHref} variant="dark" arrow="whatsapp" external>Écrire sur WhatsApp</Button>
+        </div>
+      </div>
+      <Faq items={faqs} />
+    </div>
+  </section>
+
+  <section class="contact-direct">
+    <div class="shell contact-direct__inner">
+      <div class="contact-direct__copy" data-reveal>
+        <p class="eyebrow">Vous préférez parler ?</p>
+        <h2>Appelez la maison.</h2>
+        <p>
+          Une voix est parfois plus simple qu'un message. Nous répondons pendant les horaires
+          d'ouverture, et nous rappelons si la ligne est occupée.
+        </p>
+        <div class="actions">
+          <Button href={site.phoneHref} variant="gold" arrow="phone">Appeler maintenant</Button>
+          <Button href="/devis" variant="outline" arrow="arrow-up-right">Préparer un devis</Button>
+        </div>
+      </div>
+      <div class="contact-direct__seal" aria-hidden="true">
+        <Seal />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact-copy h2 {
+    max-width: 13ch;
+    font-size: clamp(2.3rem, 1.4rem + 2.8vw, 4.3rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+
+  .contact-copy h2 :global(em) {
+    color: var(--gold-deep);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .contact-copy > p {
+    max-width: 48ch;
+    margin-top: 1.1rem;
+    font-size: 0.96rem;
+    line-height: 1.68;
+    color: var(--ink-muted);
+  }
+
+  .contact-channels {
+    margin-top: 1.6rem;
+  }
+
+  .contact-form__actions {
+    margin-top: 1.3rem;
+  }
+
+  .prepare-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-top: 1px solid var(--hair-dark);
+    border-left: 1px solid var(--hair-dark);
+  }
+
+  .prepare-card {
+    padding: clamp(1.2rem, 2.5vw, 1.9rem);
+    border-right: 1px solid var(--hair-dark);
+    border-bottom: 1px solid var(--hair-dark);
+  }
+
+  .prepare-card__num {
+    display: block;
+    margin-bottom: 1.4rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--gold-deep);
+  }
+
+  .prepare-card h3 {
+    font-size: clamp(1.4rem, 1.2rem + 0.6vw, 1.8rem);
+    line-height: 1.06;
+  }
+
+  .prepare-card p {
+    margin-top: 0.6rem;
+    font-size: 0.87rem;
+    line-height: 1.6;
+    color: var(--ink-muted);
+  }
+
+  .contact-process {
+    margin-top: clamp(3.5rem, 7vw, 6rem);
+  }
+
+  .contact-direct {
+    padding-block: clamp(3.5rem, 7vw, 6.5rem);
+    background: var(--night);
+    color: var(--ivory);
+  }
+
+  .contact-direct__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(160px, 0.35fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: center;
+  }
+
+  .contact-direct h2 {
+    max-width: 12ch;
+    margin-top: 1rem;
+    font-size: clamp(2.4rem, 1.5rem + 3vw, 4.8rem);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    color: var(--ivory);
+  }
+
+  .contact-direct__copy > p:not(.eyebrow) {
+    max-width: 48ch;
+    margin-top: 1rem;
+    color: var(--ivory-muted);
+    line-height: 1.68;
+  }
+
+  .contact-direct .actions {
+    margin-top: 1.6rem;
+  }
+
+  .contact-direct :global(.btn--outline) {
+    --btn-fg: var(--ivory);
+    --btn-border: rgba(246, 240, 226, 0.38);
+  }
+
+  .contact-direct__seal {
+    width: clamp(100px, 12vw, 170px);
+    justify-self: end;
+    opacity: 0.9;
+  }
+
+  @media (max-width: 900px) {
+    .prepare-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .contact-direct__inner {
+      grid-template-columns: 1fr;
+    }
+
+    .contact-direct__seal {
+      display: none;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .prepare-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .contact-copy h2 {
+      font-size: 2.3rem;
+    }
+
+    .contact-direct .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

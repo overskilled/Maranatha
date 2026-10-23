@@ -1,0 +1,162 @@
+---
+import LegalLayout from '../layouts/LegalLayout.astro';
+import { site } from '../data/site';
+
+const sections = [
+  {
+    id: 'responsable',
+    title: 'Responsable du traitement',
+    html: `
+      <p>
+        Les données transmises sur ce site sont traitées par <strong>${site.legalName}</strong>,
+        Bafoussam, Région de l'Ouest, Cameroun.
+      </p>
+      <p>
+        Pour toute question relative à vos données :
+        <a href="${site.emailHref}">${site.email}</a> ou <a href="${site.phoneHref}">${site.phoneDisplay}</a>.
+      </p>
+    `,
+  },
+  {
+    id: 'donnees',
+    title: 'Données collectées',
+    html: `
+      <p>Nous collectons uniquement les informations que vous choisissez de nous transmettre :</p>
+      <ul>
+        <li>votre nom et, le cas échéant, le nom de votre structure ;</li>
+        <li>votre numéro de téléphone ou WhatsApp et votre adresse e-mail ;</li>
+        <li>le contenu de votre message, de votre demande de devis ou de votre commande ;</li>
+        <li>les informations utiles au dossier : lieu de livraison, quantités, délais, budget.</li>
+      </ul>
+      <p>
+        Nous ne demandons pas de données de paiement sur ce site et nous ne créons pas de compte
+        utilisateur. Les formulaires n'enregistrent pas les messages dans une base de données : ils
+        ouvrent votre logiciel de messagerie avec un contenu pré-rempli.
+      </p>
+    `,
+  },
+  {
+    id: 'finalites',
+    title: 'Pourquoi nous utilisons ces données',
+    html: `
+      <ul>
+        <li>répondre à votre question ou à votre demande de contact ;</li>
+        <li>établir un devis et vérifier la faisabilité d'une commande ;</li>
+        <li>organiser une livraison, un transport ou une prestation ;</li>
+        <li>assurer le suivi de la relation et traiter une éventuelle réclamation.</li>
+      </ul>
+      <p>
+        Nous n'utilisons pas ces informations pour de la prospection commerciale non sollicitée et
+        nous ne les vendons pas.
+      </p>
+    `,
+  },
+  {
+    id: 'base-duree',
+    title: 'Base et durée de conservation',
+    html: `
+      <p>
+        Le traitement repose sur votre consentement lorsque vous envoyez un formulaire, et sur
+        l'exécution de la relation commerciale lorsque votre demande devient une commande ou une
+        prestation.
+      </p>
+      <p>
+        Les messages sont conservés le temps nécessaire au traitement de la demande, puis pendant la
+        durée requise pour le suivi de la relation et les obligations légales applicables. Lorsqu'une
+        information n'est plus nécessaire, elle est supprimée ou archivée de manière à limiter son
+        accès.
+      </p>
+    `,
+  },
+  {
+    id: 'destinataires',
+    title: 'Qui peut accéder aux données',
+    html: `
+      <p>
+        L'accès est limité aux personnes de la maison qui traitent votre dossier. Lorsqu'une
+        prestation l'exige, certaines informations peuvent être transmises à un transporteur, un
+        transitaire ou un partenaire intervenant dans la commande. Cette transmission est limitée à
+        ce qui est nécessaire à l'exécution du service.
+      </p>
+      <p>
+        Les prestataires techniques du site peuvent accéder aux données de navigation nécessaires au
+        fonctionnement et à la sécurité de l'hébergement, selon leurs propres engagements.
+      </p>
+    `,
+  },
+  {
+    id: 'cookies',
+    title: 'Cookies et mesure d’audience',
+    html: `
+      <p>
+        Ce site ne dépose pas de cookies publicitaires et n'utilise pas d'outil de mesure d'audience
+        tiers. Les polices de caractères sont servies depuis le site ; aucun appel à un service de
+        polices externe n'est effectué.
+      </p>
+      <p>
+        Certains liens ouvrent des services externes, notamment WhatsApp ou votre logiciel de
+        messagerie. Ces services appliquent leurs propres politiques de confidentialité, indépendantes
+        de la nôtre.
+      </p>
+    `,
+  },
+  {
+    id: 'securite',
+    title: 'Sécurité',
+    html: `
+      <p>
+        Nous limitons l'accès aux informations aux personnes concernées et prenons des mesures
+        raisonnables pour éviter la perte, l'accès non autorisé ou la divulgation. Aucun échange par
+        internet ou par messagerie ne peut toutefois être considéré comme absolument sécurisé :
+        évitez de transmettre des données sensibles qui ne seraient pas nécessaires à votre demande.
+      </p>
+    `,
+  },
+  {
+    id: 'droits',
+    title: 'Vos droits',
+    html: `
+      <p>
+        Vous pouvez demander l'accès à vos données, leur rectification ou leur suppression, ou vous
+        opposer à leur utilisation pour un motif légitime. Écrivez-nous à
+        <a href="${site.emailHref}">${site.email}</a> en précisant votre demande et, si possible, la
+        date de votre message.
+      </p>
+      <p>
+        Nous répondrons dans un délai raisonnable. Si une demande concerne une commande en cours ou
+        une obligation légale de conservation, certaines données peuvent devoir être conservées
+        jusqu'à la clôture du dossier.
+      </p>
+    `,
+  },
+  {
+    id: 'mineurs',
+    title: 'Mineurs',
+    html: `
+      <p>
+        Le site s'adresse à des personnes capables de contracter. Nous ne cherchons pas à collecter
+        sciemment des données concernant des mineurs. Si un tel cas nous est signalé, nous prendrons
+        les mesures appropriées pour supprimer les informations concernées.
+      </p>
+    `,
+  },
+  {
+    id: 'modifications',
+    title: 'Modifications',
+    html: `
+      <p>
+        Cette politique peut être mise à jour pour refléter une évolution du site ou des pratiques.
+        La date de dernière mise à jour figure en haut de la page. Les changements importants seront
+        signalés de manière visible.
+      </p>
+    `,
+  },
+];
+---
+
+<LegalLayout
+  title="Confidentialité"
+  description="Politique de confidentialité du site d'Ets Maranatha Le Juste Prix : données collectées, finalités, cookies et droits."
+  lede="Ce que nous faisons de vos informations, pourquoi nous les conservons et comment exercer vos droits."
+  sections={sections}
+/>

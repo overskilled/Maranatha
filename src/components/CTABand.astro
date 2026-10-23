@@ -1,0 +1,313 @@
+---
+import { site } from '../data/site';
+import Icon from './Icon.astro';
+import Button from './Button.astro';
+
+interface Props {
+  eyebrow?: string;
+  title?: string;
+  text?: string;
+  primaryLabel?: string;
+  primaryHref?: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+  variant?: 'dawn' | 'night' | 'ivory';
+}
+
+const {
+  eyebrow = 'La porte est ouverte',
+  title = "Dites-nous ce qu'il vous faut.",
+  text = "Un produit à trouver, une commande à livrer, un chantier à approvisionner. Écrivez-nous. Nous reviendrons avec des questions précises, puis une proposition claire.",
+  primaryLabel = 'Demander un devis',
+  primaryHref = '/devis',
+  secondaryLabel = 'Nous appeler',
+  secondaryHref = site.phoneHref,
+  variant = 'dawn',
+} = Astro.props;
+---
+
+<section class:list={['cta-band', `cta-band--${variant}`]}>
+  <div class="cta-band__stars" aria-hidden="true"></div>
+  <div class="shell cta-band__inner">
+    <div class="cta-band__copy">
+      <p class="eyebrow" data-reveal>{eyebrow}</p>
+      <h2 data-reveal>{title}</h2>
+      <p class="cta-band__text" data-reveal>{text}</p>
+      <div class="actions cta-band__actions" data-reveal>
+        <Button href={primaryHref} variant={variant === 'night' ? 'gold' : 'dark'} arrow="arrow-up-right">
+          {primaryLabel}
+        </Button>
+        <Button href={secondaryHref} variant={variant === 'night' ? 'outline' : 'outline'} arrow="phone">
+          {secondaryLabel}
+        </Button>
+      </div>
+    </div>
+
+    <aside class="cta-band__panel" data-reveal>
+      <div class="cta-band__panel-head">
+        <span class="label">Contact direct</span>
+        <span class="cta-band__mark">
+          <img src="/logo-mark.svg" alt="" width="44" height="44" loading="lazy" />
+        </span>
+      </div>
+
+      <div class="cta-band__rows">
+        <a href={site.phoneHref} class="cta-band__row">
+          <span>Par téléphone</span>
+          <strong>{site.phoneDisplay}</strong>
+          <Icon name="arrow-up-right" size={14} />
+        </a>
+        <a href={site.whatsappHref} target="_blank" rel="noopener noreferrer" class="cta-band__row">
+          <span>Sur WhatsApp</span>
+          <strong>{site.whatsappDisplay}</strong>
+          <Icon name="whatsapp" size={15} />
+        </a>
+        <a href={site.emailHref} class="cta-band__row">
+          <span>Par e-mail</span>
+          <strong>{site.email}</strong>
+          <Icon name="mail" size={15} />
+        </a>
+      </div>
+
+      <div class="cta-band__address">
+        <span class="label">Nous trouver</span>
+        <p>{site.address}</p>
+        <p>{site.hours}</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .cta-band {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(4rem, 8vw, 7.5rem);
+  }
+
+  .cta-band--dawn {
+    background: var(--dawn);
+    color: var(--night);
+  }
+
+  .cta-band--night {
+    background: var(--night);
+    color: var(--ivory);
+  }
+
+  .cta-band--ivory {
+    background: var(--ivory);
+    color: var(--ink);
+  }
+
+  .cta-band__stars {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(11, 21, 38, 0.2) 0.6px, transparent 0.6px);
+    background-size: 34px 34px;
+    opacity: 0.28;
+    pointer-events: none;
+  }
+
+  .cta-band--night .cta-band__stars {
+    background-image: radial-gradient(rgba(246, 240, 226, 0.3) 0.6px, transparent 0.6px);
+  }
+
+  .cta-band__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+    gap: clamp(2.5rem, 7vw, 7rem);
+    align-items: center;
+  }
+
+  .cta-band h2 {
+    margin-top: 1.4rem;
+    max-width: 12ch;
+    font-size: clamp(2.8rem, 6vw, 6rem);
+    line-height: 0.94;
+    letter-spacing: -0.035em;
+  }
+
+  .cta-band__text {
+    margin-top: 1.4rem;
+    max-width: 48ch;
+    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.15rem);
+    line-height: 1.65;
+    color: rgba(11, 21, 38, 0.7);
+  }
+
+  .cta-band--night .cta-band__text {
+    color: var(--ivory-muted);
+  }
+
+  .cta-band__actions {
+    margin-top: 2rem;
+  }
+
+  .cta-band--night :global(.btn--outline) {
+    --btn-fg: var(--ivory);
+    --btn-border: rgba(246, 240, 226, 0.38);
+  }
+
+  .cta-band--dawn :global(.btn--outline),
+  .cta-band--ivory :global(.btn--outline) {
+    --btn-fg: var(--night);
+    --btn-border: rgba(11, 21, 38, 0.28);
+  }
+
+  .cta-band--dawn :global(.btn--outline:hover),
+  .cta-band--ivory :global(.btn--outline:hover) {
+    background: var(--night);
+    border-color: var(--night);
+    color: var(--ivory);
+  }
+
+  .cta-band__panel {
+    position: relative;
+    background: var(--ivory-soft);
+    color: var(--ink);
+    border: 1px solid rgba(11, 21, 38, 0.14);
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+    box-shadow: 14px 14px 0 rgba(11, 21, 38, 0.08);
+  }
+
+  .cta-band--night .cta-band__panel {
+    background: var(--night-soft);
+    color: var(--ivory);
+    border-color: var(--hair-light);
+    box-shadow: 14px 14px 0 rgba(0, 0, 0, 0.22);
+  }
+
+  .cta-band__panel::before {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border: 1px solid rgba(198, 161, 91, 0.28);
+    pointer-events: none;
+  }
+
+  .cta-band__panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--hair-dark);
+  }
+
+  .cta-band--night .cta-band__panel-head {
+    border-color: var(--hair-light);
+  }
+
+  .cta-band__panel-head .label {
+    color: var(--gold-deep);
+  }
+
+  .cta-band--night .cta-band__panel-head .label {
+    color: var(--gold);
+  }
+
+  .cta-band__mark img {
+    width: 38px;
+    height: 38px;
+    background: transparent;
+  }
+
+  .cta-band__rows {
+    margin-top: 0.4rem;
+  }
+
+  .cta-band__row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 1rem;
+    align-items: center;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--hair-dark);
+  }
+
+  .cta-band--night .cta-band__row {
+    border-color: var(--hair-light);
+  }
+
+  .cta-band__row span {
+    grid-column: 1;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .cta-band--night .cta-band__row span {
+    color: var(--ivory-muted);
+  }
+
+  .cta-band__row strong {
+    grid-column: 1;
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .cta-band__row svg {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    color: var(--gold-deep);
+    transition: transform 0.25s ease;
+  }
+
+  .cta-band--night .cta-band__row svg {
+    color: var(--gold);
+  }
+
+  .cta-band__row:hover svg {
+    transform: translate(2px, -2px);
+  }
+
+  .cta-band__address {
+    padding-top: 1.1rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-muted);
+  }
+
+  .cta-band--night .cta-band__address {
+    color: var(--ivory-muted);
+  }
+
+  .cta-band__address .label {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--gold-deep);
+  }
+
+  .cta-band--night .cta-band__address .label {
+    color: var(--gold);
+  }
+
+  @media (max-width: 980px) {
+    .cta-band__inner {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+
+    .cta-band__panel {
+      max-width: 520px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .cta-band__actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .cta-band h2 {
+      font-size: clamp(2.7rem, 12vw, 4rem);
+    }
+  }
+</style>

@@ -1,0 +1,455 @@
+---
+import Figure from './Figure.astro';
+import Icon from './Icon.astro';
+import Button from './Button.astro';
+
+interface MetaItem {
+  label: string;
+  value: string;
+}
+
+interface Props {
+  index?: string;
+  label: string;
+  title: string;
+  lede: string;
+  image: string;
+  imageAlt: string;
+  imageCaption?: string;
+  imagePosition?: string;
+  parent?: { label: string; href: string };
+  meta?: MetaItem[];
+  primary?: { label: string; href: string };
+  secondary?: { label: string; href: string };
+  tone?: 'night' | 'deep';
+}
+
+const {
+  index,
+  label,
+  title,
+  lede,
+  image,
+  imageAlt,
+  imageCaption,
+  imagePosition = '50% 50%',
+  parent,
+  meta = [],
+  primary,
+  secondary,
+  tone = 'night',
+} = Astro.props;
+---
+
+<section class:list={['page-hero', `page-hero--${tone}`]}>
+  <div class="page-hero__pegboard" aria-hidden="true"></div>
+
+  <div class="shell">
+    <nav class="page-hero__crumb" aria-label="Fil d'Ariane" data-reveal>
+      <a href="/">Accueil</a>
+      <span aria-hidden="true">/</span>
+      {parent && (
+        <>
+          <a href={parent.href}>{parent.label}</a>
+          <span aria-hidden="true">/</span>
+        </>
+      )}
+      <span aria-current="page">{label}</span>
+    </nav>
+
+    <div class="page-hero__grid">
+      <div class="page-hero__copy">
+        <h1 set:html={title} data-reveal />
+        <p class="page-hero__lede" data-reveal>{lede}</p>
+
+        {
+          (primary || secondary) && (
+            <div class="actions page-hero__actions" data-reveal>
+              {primary && (
+                <Button href={primary.href} variant="gold" arrow="arrow-up-right">
+                  {primary.label}
+                </Button>
+              )}
+              {secondary && (
+                <Button href={secondary.href} variant="outline">
+                  {secondary.label}
+                </Button>
+              )}
+            </div>
+          )
+        }
+      </div>
+
+      <figure class="page-hero__media">
+        <div class="fig page-hero__figure">
+          <Figure
+            name={image}
+            alt={imageAlt}
+            position={imagePosition}
+            sizes="(max-width: 980px) 100vw, 40vw"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </div>
+        <figcaption class="page-hero__plate">
+          {index && <span class="page-hero__plate-num">{index}</span>}
+          <span class="page-hero__plate-label">{label}</span>
+          <span class="page-hero__plate-code" aria-hidden="true"></span>
+        </figcaption>
+        {
+          imageCaption && (
+            <p class="page-hero__caption">
+              <span aria-hidden="true"></span>
+              {imageCaption}
+            </p>
+          )
+        }
+      </figure>
+    </div>
+
+    {
+      meta.length > 0 && (
+        <div class="page-hero__meta" data-reveal>
+          {meta.map((item: MetaItem) => (
+            <div class="page-hero__meta-item">
+              <span class="label">{item.label}</span>
+              <span class="page-hero__meta-value">{item.value}</span>
+            </div>
+          ))}
+          <a class="page-hero__meta-link" href="/devis">
+            Parler de votre besoin
+            <Icon name="arrow-up-right" size={15} />
+          </a>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .page-hero {
+    position: relative;
+    overflow: hidden;
+    background: var(--night);
+    color: var(--ivory);
+    padding-top: calc(82px + clamp(1.8rem, 3.6vw, 3.4rem));
+  }
+
+  .page-hero--deep {
+    background: var(--night-deep);
+  }
+
+  .page-hero::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--hair-light);
+  }
+
+  .page-hero__pegboard {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(246, 240, 226, 0.18) 0.8px, transparent 0.8px);
+    background-size: 22px 22px;
+    opacity: 0.42;
+    pointer-events: none;
+  }
+
+  .shell {
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-hero__crumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(246, 240, 226, 0.46);
+  }
+
+  .page-hero__crumb a:hover {
+    color: var(--gold);
+  }
+
+  .page-hero__crumb span[aria-current] {
+    color: var(--gold);
+  }
+
+  .page-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: center;
+    padding-block: clamp(1.8rem, 3.6vw, 3.4rem) clamp(2rem, 3.8vw, 3.2rem);
+  }
+
+  .page-hero__copy h1 {
+    max-width: 12ch;
+    margin-top: 1.8rem;
+    font-size: clamp(3.2rem, 7vw, 7.2rem);
+    font-weight: 600;
+    line-height: 0.94;
+    letter-spacing: -0.03em;
+    color: var(--ivory);
+  }
+
+  .page-hero__copy h1 :global(em) {
+    color: var(--gold);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .page-hero__lede {
+    max-width: 52ch;
+    margin-top: 1.6rem;
+    font-size: clamp(1.05rem, 0.95rem + 0.45vw, 1.28rem);
+    line-height: 1.55;
+    color: var(--ivory-muted);
+  }
+
+  .page-hero__actions {
+    margin-top: 2rem;
+  }
+
+  .page-hero__media {
+    position: relative;
+    align-self: end;
+    margin: 0;
+    max-width: 470px;
+    justify-self: end;
+    width: 100%;
+  }
+
+  .page-hero__figure {
+    position: relative;
+    z-index: 1;
+    height: clamp(370px, 39vw, 520px);
+    border: 1px solid rgba(246, 240, 226, 0.18);
+    border-radius: 2px;
+    animation: m-image-in 1.25s var(--ease-out) both;
+  }
+
+  .page-hero__figure :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(1) contrast(1.01);
+  }
+
+  .page-hero__plate {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.8rem 1rem;
+    background: var(--ivory);
+    color: var(--night);
+    border-top: 3px solid var(--gold);
+    animation: m-fade-up 0.8s var(--ease-out) 0.25s both;
+  }
+
+  .page-hero__plate-num {
+    flex: none;
+    padding-right: 0.9rem;
+    border-right: 1px solid rgba(20, 27, 36, 0.18);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--gold-deep);
+  }
+
+  .page-hero__plate-label {
+    min-width: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .page-hero__plate-code {
+    flex: none;
+    margin-left: auto;
+    width: 62px;
+    height: 20px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--night) 0 1px,
+      transparent 1px 3px,
+      var(--night) 3px 4px,
+      transparent 4px 7px,
+      var(--night) 7px 9px,
+      transparent 9px 11px
+    );
+    opacity: 0.72;
+  }
+
+  .page-hero__caption {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    color: rgba(246, 240, 226, 0.52);
+  }
+
+  .page-hero__caption span {
+    flex: none;
+    width: 14px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .page-hero__meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 1.5rem;
+    align-items: center;
+    padding-block: 1.4rem 1.8rem;
+    border-top: 1px solid var(--hair-light);
+  }
+
+  .page-hero__meta-item {
+    display: grid;
+    gap: 0.25rem;
+    padding-left: 1.1rem;
+    border-left: 1px solid var(--hair-light);
+  }
+
+  .page-hero__meta-item:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .page-hero__meta-item .label {
+    color: var(--gold);
+    font-size: 0.6rem;
+  }
+
+  .page-hero__meta-value {
+    font-size: 0.88rem;
+    line-height: 1.35;
+    color: rgba(246, 240, 226, 0.78);
+  }
+
+  .page-hero__meta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    justify-self: end;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .page-hero__meta-link svg {
+    transition: transform 0.25s ease;
+  }
+
+  .page-hero__meta-link:hover svg {
+    transform: translate(2px, -2px);
+  }
+
+  @media (max-width: 1080px) {
+    .page-hero__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
+      gap: 3rem;
+    }
+
+    .page-hero__copy h1 {
+      font-size: clamp(3rem, 7.6vw, 5.6rem);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .page-hero__grid {
+      grid-template-columns: 1fr;
+      padding-top: 2.5rem;
+    }
+
+    .page-hero__copy h1 {
+      max-width: 13ch;
+    }
+
+    .page-hero__media {
+      max-width: none;
+      justify-self: stretch;
+      margin-top: 0.5rem;
+    }
+
+    .page-hero__figure {
+      height: clamp(320px, 58vw, 460px);
+    }
+
+    .page-hero__meta {
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+
+    .page-hero__meta-item {
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    .page-hero__meta-link {
+      justify-self: start;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .page-hero {
+      padding-top: calc(70px + 1.8rem);
+    }
+
+    .page-hero__grid {
+      padding-block: 1.8rem 2.5rem;
+      gap: 2.2rem;
+    }
+
+    .page-hero__copy h1 {
+      font-size: clamp(2.9rem, 13vw, 4rem);
+      max-width: 12ch;
+    }
+
+    .page-hero__lede {
+      font-size: 1rem;
+    }
+
+    .page-hero__actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .page-hero__figure {
+      height: 300px;
+    }
+
+    .page-hero__plate {
+      gap: 0.7rem;
+      padding: 0.7rem 0.8rem;
+    }
+
+    .page-hero__plate-code {
+      display: none;
+    }
+
+    .page-hero__meta {
+      grid-template-columns: 1fr;
+      padding-bottom: 1.6rem;
+    }
+  }
+</style>

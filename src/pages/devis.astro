@@ -1,0 +1,374 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import Faq from '../components/Faq.astro';
+import Button from '../components/Button.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../data/site';
+import { divisions } from '../data/divisions';
+
+const steps = [
+  {
+    number: '01',
+    title: 'Votre demande',
+    text: "Vous décrivez le besoin, la quantité, le lieu et la date souhaitée. Une photo ou un plan peut remplacer beaucoup de texte.",
+  },
+  {
+    number: '02',
+    title: 'Nos questions',
+    text: "Nous vérifions ce qui manque : qualité, conditionnement, accès, budget, contraintes de livraison.",
+  },
+  {
+    number: '03',
+    title: 'Le devis',
+    text: "Un document écrit, avec les lignes, le prix, le délai, la durée de validité et les conditions.",
+  },
+  {
+    number: '04',
+    title: 'La confirmation',
+    text: "Vous validez, nous engageons la commande. Un interlocuteur suit ensuite l'exécution jusqu'à la remise.",
+  },
+];
+
+const faqs = [
+  {
+    question: 'Le devis est-il gratuit ?',
+    answer:
+      "Un devis standard est établi sans frais. Pour une étude particulière — métré, visite de site, recherche de plusieurs références — nous vous indiquons à l'avance si un frais d'étude s'applique.",
+  },
+  {
+    question: 'Combien de temps faut-il pour recevoir un devis ?',
+    answer:
+      "Cela dépend de la complexité de la demande et de la disponibilité des informations. Nous vous donnons un délai dès réception, et nous vous prévenons si une vérification prend plus de temps.",
+  },
+  {
+    question: 'Puis-je demander un devis sans connaître les quantités exactes ?',
+    answer:
+      "Oui. Indiquez ce que vous savez et joignez une photo, un plan ou une liste. Nous vous aiderons à préciser les quantités avant de fixer le prix.",
+  },
+  {
+    question: 'Le devis inclut-il la livraison ?',
+    answer:
+      "Il le précise toujours. Si la livraison est incluse, elle apparaît comme une ligne ou une mention. Si elle ne l'est pas, le devis indique le lieu de retrait et le coût éventuel du transport.",
+  },
+  {
+    question: 'Que se passe-t-il si je refuse le devis ?',
+    answer:
+      "Vous restez libre. Un devis n'est pas une commande. Si le prix ou le délai ne vous convient pas, dites-le-nous : nous pouvons ajuster une option, retirer une ligne ou vous orienter ailleurs.",
+  },
+  {
+    question: 'Le prix du devis peut-il changer ensuite ?',
+    answer:
+      "Un devis a une durée de validité. Si un coût change avant la commande, nous vous prévenons. Une fois la commande confirmée, le prix ne change pas sans votre accord écrit.",
+  },
+];
+
+const subjects = [
+  ...divisions.map((division) => division.name),
+  'Plusieurs métiers',
+  'Autre demande',
+];
+---
+
+<BaseLayout
+  title="Demander un devis"
+  description="Demandez un devis clair à Ets Maranatha Le Juste Prix : commerce, import-export, agriculture, transport, BTP ou services. Prix détaillé, délai annoncé et interlocuteur unique."
+>
+  <PageHero
+    index="06"
+    label="Devis"
+    title="Un devis clair, <em>avant tout engagement.</em>"
+    lede="Décrivez votre besoin. Nous revenons avec les questions utiles, puis un devis écrit qui distingue les lignes, le délai et ce qui est inclus."
+    image="warehouse-worker"
+    imageAlt="Préparateur de commandes dans un entrepôt"
+    imageCaption="Préparation d'une commande, avant expédition."
+    imagePosition="50% 35%"
+    meta={[
+      { label: 'Réponse', value: 'Un devis écrit et détaillé' },
+      { label: 'Périmètre', value: 'Six métiers · Une maison' },
+      { label: 'Contact', value: 'Un interlocuteur par dossier' },
+    ]}
+    primary={{ label: 'Remplir la demande', href: '#demande' }}
+    secondary={{ label: 'Nous appeler', href: site.phoneHref }}
+  />
+
+  <section class="page-section" id="demande">
+    <div class="shell devis-layout">
+      <div class="form-panel" data-reveal>
+        <div class="form-panel__head">
+          <div>
+            <p class="eyebrow">Votre demande</p>
+            <h2>Parlez-nous du besoin.</h2>
+            <p>Plus le brief est précis, plus le devis sera juste. Les champs marqués d'un astérisque sont nécessaires.</p>
+          </div>
+          <span class="label">Devis écrit</span>
+        </div>
+
+        <form
+          data-mailto-form
+          data-email={site.email}
+          data-subject="Demande de devis"
+          action={`mailto:${site.email}`}
+          method="post"
+          enctype="text/plain"
+        >
+          <div class="form-grid">
+            <div class="field">
+              <label for="devis-name">Nom et prénom *</label>
+              <input id="devis-name" name="name" type="text" autocomplete="name" required placeholder="Votre nom" />
+            </div>
+
+            <div class="field">
+              <label for="devis-company">Structure / entreprise</label>
+              <input id="devis-company" name="company" type="text" autocomplete="organization" placeholder="Si applicable" />
+            </div>
+
+            <div class="field">
+              <label for="devis-phone">Téléphone / WhatsApp *</label>
+              <input id="devis-phone" name="phone" type="tel" autocomplete="tel" required placeholder="+237 ..." />
+            </div>
+
+            <div class="field">
+              <label for="devis-email">E-mail</label>
+              <input id="devis-email" name="email" type="email" autocomplete="email" placeholder="vous@exemple.com" />
+            </div>
+
+            <div class="field">
+              <label for="devis-subject">Métier concerné</label>
+              <select id="devis-subject" name="division">
+                {subjects.map((subject) => <option>{subject}</option>)}
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="devis-quantity">Quantité / volume</label>
+              <input id="devis-quantity" name="quantity" type="text" placeholder="Ex. 40 sacs, 12 m³, 1 lot" />
+            </div>
+
+            <div class="field field--full">
+              <label for="devis-description">Description du besoin *</label>
+              <textarea
+                id="devis-description"
+                name="description"
+                required
+                placeholder="Produit ou prestation, qualité attendue, usage, contraintes particulières..."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label for="devis-place">Lieu de livraison / chantier</label>
+              <input id="devis-place" name="place" type="text" placeholder="Ville, quartier, site" />
+            </div>
+
+            <div class="field">
+              <label for="devis-deadline">Délai souhaité</label>
+              <input id="devis-deadline" name="deadline" type="text" placeholder="Ex. avant le 15 novembre" />
+            </div>
+
+            <div class="field">
+              <label for="devis-budget">Budget indicatif</label>
+              <input id="devis-budget" name="budget" type="text" placeholder="Fourchette, si vous en avez une" />
+            </div>
+
+            <div class="field">
+              <label for="devis-contact">Comment vous joindre ?</label>
+              <select id="devis-contact" name="contact_preference">
+                <option>Téléphone</option>
+                <option>WhatsApp</option>
+                <option>E-mail</option>
+              </select>
+            </div>
+
+            <div class="field field--full field--check">
+              <input id="devis-consent" name="consent" type="checkbox" required />
+              <label for="devis-consent">
+                J'accepte que mes informations soient utilisées pour établir et suivre ma demande.
+                Voir la <a href="/confidentialite">politique de confidentialité</a>.
+              </label>
+            </div>
+          </div>
+
+          <div class="actions devis-form__actions">
+            <Button type="submit" variant="dark" arrow="mail">Envoyer ma demande</Button>
+          </div>
+
+          <p class="form-note">
+            Ce formulaire ouvre votre logiciel de messagerie avec la demande pré-remplie. Vous pouvez
+            aussi nous envoyer les détails directement par WhatsApp.
+          </p>
+          <p class="form-status" data-form-status hidden role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <aside class="devis-aside" data-reveal>
+        <div class="devis-aside__box devis-aside__box--dark">
+          <span class="label">Un interlocuteur</span>
+          <h3>Vous préférez parler ?</h3>
+          <p>Appelez-nous ou envoyez un message vocal. Nous transformons votre besoin en demande écrite.</p>
+          <ul>
+            <li>
+              <Icon name="phone" size={15} />
+              <a href={site.phoneHref}>{site.phoneDisplay}</a>
+            </li>
+            <li>
+              <Icon name="whatsapp" size={15} />
+              <a href={site.whatsappHref} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="devis-aside__box">
+          <span class="label">Ce qui nous aide</span>
+          <h3>Un brief utile.</h3>
+          <ul>
+            <li><Icon name="check" size={14} /> Une photo, un plan ou une référence.</li>
+            <li><Icon name="check" size={14} /> La quantité dans l'unité qui compte.</li>
+            <li><Icon name="check" size={14} /> Le lieu et la date de livraison.</li>
+            <li><Icon name="check" size={14} /> Le budget ou la contrainte principale.</li>
+          </ul>
+        </div>
+
+        <div class="devis-aside__box">
+          <span class="label">Ce que le devis contient</span>
+          <h3>Des lignes, pas un chiffre.</h3>
+          <ul>
+            <li><Icon name="check" size={14} /> La marchandise ou la prestation, avec sa quantité.</li>
+            <li><Icon name="check" size={14} /> Le transport et la manutention, s'ils s'appliquent.</li>
+            <li><Icon name="check" size={14} /> Le délai, la validité et les conditions de paiement.</li>
+            <li><Icon name="check" size={14} /> Ce qui est inclus, et ce qui ne l'est pas.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="page-section page-section--night on-dark">
+    <div class="shell">
+      <SectionHead
+        index="02"
+        label="La méthode"
+        title="Du besoin <em>au devis.</em>"
+        intro="Nous ne donnons pas un prix sans comprendre ce qui est demandé. Ce chemin nous permet de rester précis, même quand la demande est urgente."
+      />
+      <ProcessSteps steps={steps} />
+      <div class="devis-process__foot">
+        <p class="process-aside__quote">« Un devis n'est pas une promesse en l'air. C'est une proposition que l'on peut vérifier. »</p>
+        <a class="link-arrow" href="/le-juste-prix">
+          Lire nos engagements
+          <Icon name="arrow-right" size={14} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft">
+    <div class="shell faq-split">
+      <div class="faq-split__aside" data-reveal>
+        <p class="eyebrow">Questions devis</p>
+        <h2>Avant de <em>valider.</em></h2>
+        <p>
+          Un devis doit pouvoir être lu sans traduction. Si une ligne n'est pas claire, demandez :
+          c'est exactement ce pour quoi nous sommes là.
+        </p>
+        <div class="actions">
+          <Button href="/contact" variant="dark" arrow="arrow-up-right">Poser une question</Button>
+        </div>
+      </div>
+      <Faq items={faqs} />
+    </div>
+  </section>
+
+  <section class="devis-contact">
+    <div class="shell devis-contact__inner" data-reveal>
+      <div>
+        <p class="eyebrow">La maison est joignable</p>
+        <h2>Un doute sur ce qu'il faut demander ?</h2>
+        <p>Écrivez-nous simplement ce que vous cherchez. Nous vous aidons à formuler la demande avant de parler de prix.</p>
+      </div>
+      <div class="actions">
+        <Button href={site.phoneHref} variant="gold" arrow="phone">Appeler la maison</Button>
+        <Button href="/contact" variant="outline" arrow="arrow-up-right">Nous écrire</Button>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .devis-form__actions {
+    margin-top: 1.3rem;
+  }
+
+  .devis-aside__box a:hover {
+    color: var(--gold);
+  }
+
+  .devis-process__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .devis-contact {
+    padding-block: clamp(3rem, 6vw, 5.5rem);
+    background: var(--dawn);
+    color: var(--night);
+  }
+
+  .devis-contact__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: end;
+  }
+
+  .devis-contact h2 {
+    max-width: 16ch;
+    margin-top: 0.9rem;
+    font-size: clamp(2.2rem, 1.4rem + 2.6vw, 4.2rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .devis-contact p:not(.eyebrow) {
+    max-width: 50ch;
+    margin-top: 0.9rem;
+    color: rgba(11, 21, 38, 0.7);
+    line-height: 1.65;
+  }
+
+  .devis-contact .actions {
+    justify-content: flex-end;
+  }
+
+  .devis-contact :global(.btn--outline) {
+    --btn-fg: var(--night);
+    --btn-border: rgba(11, 21, 38, 0.28);
+  }
+
+  @media (max-width: 900px) {
+    .devis-contact__inner {
+      grid-template-columns: 1fr;
+    }
+
+    .devis-contact .actions {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .devis-process__foot {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .devis-contact .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

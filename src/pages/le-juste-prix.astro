@@ -1,0 +1,624 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Faq from '../components/Faq.astro';
+import CTABand from '../components/CTABand.astro';
+import Figure from '../components/Figure.astro';
+import Icon from '../components/Icon.astro';
+import Seal from '../components/Seal.astro';
+import Button from '../components/Button.astro';
+import { site } from '../data/site';
+
+const pledges = [
+  {
+    title: 'Le prix affiché est le prix payé',
+    text: "Le montant annoncé est celui qui est encaissé. Une remise peut exister, mais elle est annoncée avant la commande. Elle n'apparaît jamais comme une surprise à la caisse.",
+  },
+  {
+    title: 'La disponibilité est dite vraie',
+    text: "Quand nous disons qu'un article est disponible, nous l'avons vérifié. S'il ne l'est pas, nous donnons une date de retour réaliste ou une alternative comparable.",
+  },
+  {
+    title: 'Le devis détaille tout',
+    text: "Marchandise, transport, manutention, travaux et services sont distingués. Vous voyez ce que vous payez, et vous pouvez retirer une ligne avant de valider.",
+  },
+  {
+    title: 'La qualité est nommée',
+    text: "Une marque, une section, un calibre, une origine : ce qui compte est écrit. Nous ne remplaçons pas une référence par une autre sans votre accord.",
+  },
+  {
+    title: 'Le délai est annoncé',
+    text: "Nous donnons une date ou une fourchette, pas une promesse vague. Si un imprévu change le délai, vous êtes prévenu dès que l'information est fiable.",
+  },
+  {
+    title: 'La réclamation est entendue',
+    text: "Une erreur peut arriver. Ce qui compte, c'est la manière de la traiter : écouter, vérifier, proposer une solution écrite et corriger ce qui doit l'être.",
+  },
+];
+
+const refusals = [
+  {
+    title: 'Les frais découverts à la caisse',
+    text: "Un prix qui grossit au moment de payer n'est pas un prix. C'est une surprise organisée.",
+  },
+  {
+    title: 'Les quantités qui changent sans prévenir',
+    text: "Un sac annoncé plein ne doit pas arriver à moitié vide. Le conditionnement fait partie de la commande.",
+  },
+  {
+    title: 'Les matériaux remplacés sans accord',
+    text: "Une section plus fine, une marque différente, un calibre inférieur : le changement doit être dit et accepté.",
+  },
+  {
+    title: 'Les délais inventés',
+    text: "Une date inventée pour rassurer coûte plus cher qu'une date honnête. Nous préférons dire vrai, même quand c'est moins confortable.",
+  },
+  {
+    title: 'Les promesses qui n’engagent personne',
+    text: "« On verra », « ça devrait aller », « je vous rappelle » : nous préférons une réponse claire, même si elle est négative.",
+  },
+];
+
+const faqs = [
+  {
+    question: 'Le prix juste, est-ce le prix le plus bas ?',
+    answer:
+      "Non. Le prix le plus bas peut cacher une qualité inférieure, un transport non compris ou un service absent. Le prix juste correspond à ce qui est réellement livré, avec les coûts visibles et une marge qui permet de tenir la parole donnée.",
+  },
+  {
+    question: 'Que se passe-t-il si le prix change entre le devis et la livraison ?',
+    answer:
+      "Un devis a une durée de validité. Si un coût change avant la commande, nous vous prévenons et vous pouvez accepter, ajuster ou annuler. Une fois la commande confirmée, le prix ne change pas sans votre accord écrit.",
+  },
+  {
+    question: 'Puis-je négocier ?',
+    answer:
+      "Vous pouvez demander une remise sur un volume ou une commande régulière. Nous l'étudions et l'annonçons avant la commande. Nous ne compensons pas une remise en réduisant discrètement la quantité ou la qualité.",
+  },
+  {
+    question: 'Comment vérifier qu’un prix est complet ?',
+    answer:
+      "Demandez le prix rendu à destination, puis faites préciser ce qui est inclus : transport, manutention, douane, travaux, mise en service. Le devis doit distinguer les lignes, pas seulement afficher un total.",
+  },
+  {
+    question: 'Que faire si la marchandise ne correspond pas ?',
+    answer:
+      "Signalez l'écart au moment de la réception, avec une photo si possible. Nous vérifions la commande, le bon de livraison et l'état de la marchandise, puis nous proposons une solution écrite : remplacement, avoir ou ajustement.",
+  },
+];
+---
+
+<BaseLayout
+  title="Le juste prix"
+  description="Nos engagements pour un prix affiché, un devis détaillé et une parole tenue. Le juste prix, en pleine lumière, à Bafoussam."
+>
+  <PageHero
+    index="03"
+    label="Le juste prix"
+    title="Le juste prix, <em>en pleine lumière.</em>"
+    lede="Un prix qui se dit, qui s'écrit et qui se tient. Voici les règles que nous nous imposons, et les pratiques que nous refusons."
+    image="shopkeeper-man"
+    imageAlt="Commerçant debout dans sa boutique"
+    imageCaption="Le comptoir, là où la parole se vérifie."
+    imagePosition="50% 30%"
+    meta={[
+      { label: 'La règle', value: 'Le prix affiché est le prix payé' },
+      { label: 'Le devis', value: 'Chaque ligne est nommée' },
+      { label: 'Le recours', value: 'Une réclamation est traitée' },
+    ]}
+    primary={{ label: 'Demander un devis', href: '/devis' }}
+    secondary={{ label: 'Nous écrire', href: '/contact' }}
+  />
+
+  <section class="page-section">
+    <div class="shell intro-split">
+      <div class="intro-copy" data-reveal>
+        <p class="eyebrow">La règle</p>
+        <h2>Une règle, <em>pas une intention.</em></h2>
+        <p class="lede">
+          « Le juste prix » pourrait rester un beau mot. Nous voulons qu'il se vérifie dans une
+          facture, un devis, un bon de livraison et une réponse donnée au téléphone.
+        </p>
+        <p>
+          Une intention ne survit pas à une journée chargée. Une règle, si. Elle décide à notre place
+          quand nous sommes fatigués, quand un client insiste ou quand une commande devient moins
+          rentable que prévu.
+        </p>
+        <p>
+          La balance de Proverbes 11:1 ne penche ni pour le vendeur ni pour l'acheteur. Elle dit le
+          poids. C'est exigeant, parfois coûteux, mais c'est ce qui rend une maison digne de
+          confiance sur la durée.
+        </p>
+        <div class="actions">
+          <Button href="#engagements" variant="dark" arrow="arrow-right">Lire les six engagements</Button>
+        </div>
+      </div>
+
+      <div class="media-stack" data-reveal>
+        <div class="media-stack__main" data-parallax>
+          <Figure
+            name="market-grains"
+            alt="Commerçante entourée de sacs de céréales sur un marché"
+            sizes="(max-width: 900px) 82vw, 40vw"
+          />
+        </div>
+        <div class="media-stack__inset">
+          <Figure
+            name="bafoussam-harvest"
+            alt="Agriculteur portant un sac de récolte sur la tête"
+            sizes="(max-width: 900px) 46vw, 22vw"
+          />
+        </div>
+        <span class="media-stack__label">
+          <strong>Le juste prix</strong>
+          Une parole tenue
+        </span>
+        <p class="media-stack__caption">Du producteur au comptoir, le prix se construit avec des personnes.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft" id="engagements">
+    <div class="shell">
+      <SectionHead
+        index="04"
+        label="Nos engagements"
+        title="Six promesses <em>vérifiables.</em>"
+        intro="Elles ne dépendent pas de l'humeur du jour. Elles s'appliquent au détail comme au gros, au comptoir comme au chantier."
+      />
+
+      <ol class="pledge-list" data-reveal-group>
+        {
+          pledges.map((pledge, index) => (
+            <li class="pledge" id={`engagement-${index + 1}`}>
+              <span class="pledge__num">{String(index + 1).padStart(2, '0')}</span>
+              <div class="pledge__body">
+                <h3>{pledge.title}</h3>
+                <p>{pledge.text}</p>
+              </div>
+              <Icon name="check" size={18} strokeWidth={1.6} />
+            </li>
+          ))
+        }
+      </ol>
+
+      <p class="pledge-note">
+        <span class="label">En pratique</span>
+        Une promesse qui n'est pas écrite reste une intention. Demandez-nous le prix, le délai et les
+        conditions par écrit : c'est aussi notre manière de nous engager.
+      </p>
+    </div>
+  </section>
+
+  <section class="page-section page-section--night-deep on-dark">
+    <div class="shell">
+      <SectionHead
+        index="05"
+        label="Ce que nous refusons"
+        title="Il y a des ventes <em>que nous ne faisons pas.</em>"
+        intro="Un refus n'est pas une posture. C'est une ligne de conduite qui nous coûte parfois une commande, et qui protège la suivante."
+      />
+
+      <div class="refusal-grid" data-reveal-group>
+        {
+          refusals.map((refusal, index) => (
+            <article class="refusal">
+              <div class="refusal__top">
+                <span class="refusal__num">{String(index + 1).padStart(2, '0')}</span>
+                <span class="refusal__mark" aria-hidden="true">×</span>
+              </div>
+              <h3>{refusal.title}</h3>
+              <p>{refusal.text}</p>
+            </article>
+          ))
+        }
+      </div>
+
+      <p class="refusal-foot">
+        Ce n'est pas une garantie de perfection. C'est une direction. Quand nous nous trompons,
+        nous corrigeons — et nous le disons.
+      </p>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="shell price-anatomy">
+      <div class="price-anatomy__copy" data-reveal>
+        <p class="eyebrow">La facture</p>
+        <h2>Un prix juste, <em>ça se lit.</em></h2>
+        <p>
+          Un total ne dit pas tout. Derrière un montant, il y a des lignes : la marchandise, le
+          transport, la manutention, le travail. Les rendre visibles évite les malentendus.
+        </p>
+        <p>
+          Nous ne demandons pas de faire confiance à un chiffre. Nous préférons que vous puissiez le
+          vérifier, le comparer et poser des questions avant de valider.
+        </p>
+        <ul class="price-anatomy__list">
+          <li><Icon name="check" size={15} /> Demandez le prix rendu, pas seulement le prix départ.</li>
+          <li><Icon name="check" size={15} /> Faites préciser ce qui est inclus et ce qui ne l'est pas.</li>
+          <li><Icon name="check" size={15} /> Gardez le devis signé ou validé par message.</li>
+        </ul>
+        <a class="link-arrow" href="/carnet/le-prix-affiche-est-le-prix-paye">
+          Lire notre note sur le prix affiché
+          <Icon name="arrow-right" size={14} />
+        </a>
+      </div>
+
+      <div class="price-sheet" data-reveal>
+        <div class="price-sheet__head">
+          <span class="label">Fiche de prix · principe</span>
+          <span class="price-sheet__ref">N° 001</span>
+        </div>
+
+        <dl class="price-sheet__rows">
+          <div>
+            <dt>Marchandise</dt>
+            <dd>La référence, la quantité et le conditionnement commandés.</dd>
+          </div>
+          <div>
+            <dt>Transport</dt>
+            <dd>Le trajet, le véhicule et le lieu de remise. Chiffré séparément.</dd>
+          </div>
+          <div>
+            <dt>Manutention</dt>
+            <dd>Le chargement et le déchargement lorsqu'ils sont nécessaires.</dd>
+          </div>
+          <div>
+            <dt>Service ou travaux</dt>
+            <dd>La main-d'œuvre, l'étude ou l'accompagnement, avec leur périmètre.</dd>
+          </div>
+        </dl>
+
+        <div class="price-sheet__total">
+          <span>Total annoncé</span>
+          <strong>Avant la commande</strong>
+        </div>
+
+        <p class="price-sheet__note">
+          Aucun frais n'est ajouté après validation sans votre accord écrit.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft">
+    <div class="shell faq-split">
+      <div class="faq-split__aside" data-reveal>
+        <p class="eyebrow">Questions</p>
+        <h2>Le juste prix, <em>sans détour.</em></h2>
+        <p>
+          Les questions que l'on nous pose sur les prix, les devis et les recours. Si la vôtre n'y
+          est pas, écrivez-nous : nous répondons avec le cas précis.
+        </p>
+        <div class="actions">
+          <Button href="/contact" variant="dark" arrow="arrow-up-right">Poser une question</Button>
+        </div>
+      </div>
+      <Faq items={faqs} />
+    </div>
+  </section>
+
+  <section class="page-quote">
+    <div class="shell page-quote__inner">
+      <span class="page-quote__seal"><Seal /></span>
+      <figure>
+        <blockquote>
+          <p>« La balance fausse est en horreur à l'Éternel, mais le poids juste lui est agréable. »</p>
+        </blockquote>
+        <figcaption>Proverbes 11:1 · {site.name}</figcaption>
+      </figure>
+      <span class="page-quote__seal page-quote__seal--end"><Seal /></span>
+    </div>
+  </section>
+
+  <CTABand
+    variant="dawn"
+    eyebrow="Un devis à vérifier ?"
+    title="Demandez le prix complet."
+    text="Nous préférons répondre à une question de plus que corriger un malentendu après la livraison. Dites-nous ce que vous attendez, nous vous dirons ce que cela coûte."
+  />
+</BaseLayout>
+
+<style>
+  .pledge-list {
+    border-top: 1px solid var(--hair-dark);
+  }
+
+  .pledge {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr) auto;
+    gap: clamp(1rem, 2vw, 2rem);
+    align-items: start;
+    padding-block: clamp(1.3rem, 2.5vw, 2rem);
+    border-bottom: 1px solid var(--hair-dark);
+    transition: background-color 0.3s ease;
+  }
+
+  .pledge:hover {
+    background: var(--gold-wash);
+  }
+
+  .pledge__num {
+    padding-top: 0.35rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--gold-deep);
+  }
+
+  .pledge__body h3 {
+    max-width: 22ch;
+    font-size: clamp(1.6rem, 1.3rem + 1vw, 2.3rem);
+    line-height: 1.05;
+  }
+
+  .pledge__body p {
+    max-width: 64ch;
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--ink-muted);
+  }
+
+  .pledge > :global(svg) {
+    margin-top: 0.5rem;
+    color: var(--gold-deep);
+  }
+
+  .pledge-note {
+    max-width: 58ch;
+    margin-top: 1.8rem;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--ink-muted);
+  }
+
+  .pledge-note .label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--gold-deep);
+  }
+
+  .refusal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--hair-light);
+    border-left: 1px solid var(--hair-light);
+  }
+
+  .refusal {
+    padding: clamp(1.3rem, 2.5vw, 2rem);
+    border-right: 1px solid var(--hair-light);
+    border-bottom: 1px solid var(--hair-light);
+  }
+
+  .refusal__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .refusal__num {
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+  }
+
+  .refusal__mark {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    line-height: 1;
+    color: var(--gold);
+  }
+
+  .refusal h3 {
+    max-width: 18ch;
+    font-size: clamp(1.4rem, 1.2rem + 0.7vw, 1.85rem);
+    line-height: 1.08;
+  }
+
+  .refusal p {
+    max-width: 34ch;
+    margin-top: 0.7rem;
+    font-size: 0.9rem;
+    line-height: 1.62;
+    color: var(--ivory-muted);
+  }
+
+  .refusal-foot {
+    max-width: 56ch;
+    margin-top: 1.8rem;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--ivory-muted);
+  }
+
+  .price-anatomy {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: clamp(2.5rem, 6vw, 6rem);
+    align-items: center;
+  }
+
+  .price-anatomy__copy h2 {
+    max-width: 13ch;
+    font-size: clamp(2.2rem, 1.4rem + 2.6vw, 4.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+
+  .price-anatomy__copy h2 :global(em) {
+    color: var(--gold-deep);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .price-anatomy__copy > p {
+    max-width: 50ch;
+    margin-top: 1.1rem;
+    color: var(--ink-muted);
+    line-height: 1.7;
+  }
+
+  .price-anatomy__list {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--hair-dark);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-muted);
+  }
+
+  .price-anatomy__list li {
+    display: grid;
+    grid-template-columns: 1.2rem minmax(0, 1fr);
+    gap: 0.55rem;
+  }
+
+  .price-anatomy__list li :global(svg) {
+    margin-top: 0.15rem;
+    color: var(--gold-deep);
+  }
+
+  .price-anatomy__copy .link-arrow {
+    margin-top: 1.6rem;
+  }
+
+  .price-sheet {
+    position: relative;
+    padding: clamp(1.3rem, 3vw, 2rem);
+    border: 1px solid var(--hair-dark);
+    background: var(--ivory-soft);
+    box-shadow: 16px 16px 0 rgba(11, 21, 38, 0.06);
+  }
+
+  .price-sheet::before {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border: 1px solid rgba(198, 161, 91, 0.28);
+    pointer-events: none;
+  }
+
+  .price-sheet__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--hair-dark);
+  }
+
+  .price-sheet__head .label {
+    color: var(--gold-deep);
+  }
+
+  .price-sheet__ref {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+  }
+
+  .price-sheet__rows {
+    margin-top: 0.4rem;
+  }
+
+  .price-sheet__rows > div {
+    display: grid;
+    grid-template-columns: 0.72fr 1fr;
+    gap: 1rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--hair-dark);
+  }
+
+  .price-sheet__rows dt {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    line-height: 1.15;
+    color: var(--ink);
+  }
+
+  .price-sheet__rows dd {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+
+  .price-sheet__total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1rem;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .price-sheet__total strong {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    color: var(--gold-deep);
+  }
+
+  .price-sheet__note {
+    margin-top: 0.9rem;
+    padding-top: 0.8rem;
+    border-top: 1px dashed var(--hair-dark);
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+
+  @media (max-width: 1080px) {
+    .refusal-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .price-anatomy {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .refusal-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .pledge {
+      grid-template-columns: 2.2rem minmax(0, 1fr);
+    }
+
+    .pledge > :global(svg) {
+      display: none;
+    }
+
+    .price-sheet__rows > div {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .price-anatomy__copy h2 {
+      font-size: 2.2rem;
+    }
+
+    .price-sheet {
+      box-shadow: 8px 8px 0 rgba(11, 21, 38, 0.06);
+    }
+  }
+</style>

@@ -1,0 +1,349 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import CTABand from '../components/CTABand.astro';
+import Figure from '../components/Figure.astro';
+import Icon from '../components/Icon.astro';
+import Seal from '../components/Seal.astro';
+import Button from '../components/Button.astro';
+import { divisions } from '../data/divisions';
+import { divisionPageBySlug } from '../data/division-pages';
+
+const steps = [
+  {
+    number: '01',
+    title: 'Le besoin',
+    text: "Vous décrivez ce qu'il faut, pour quand et pour où. Une photo, une liste ou un plan suffit pour commencer.",
+  },
+  {
+    number: '02',
+    title: 'Le devis',
+    text: "Nous vérifions la disponibilité et le coût complet. Le prix, le délai et le périmètre sont écrits.",
+  },
+  {
+    number: '03',
+    title: 'L’exécution',
+    text: "Achat, transport, travaux ou service : un interlocuteur suit le dossier et vous prévient en cas d'écart.",
+  },
+  {
+    number: '04',
+    title: 'La remise',
+    text: "La marchandise ou le service est remis au lieu convenu, avec un état et un compte rendu.",
+  },
+];
+---
+
+<BaseLayout
+  title="Nos activités à Bafoussam"
+  description="Six métiers complémentaires à Bafoussam : commerce général, import-export, agriculture et élevage, transport, BTP et services. Une seule maison, une même exigence de prix juste."
+>
+  <PageHero
+    index="01"
+    label="Nos activités"
+    title="Six métiers. <em>Une seule mesure.</em>"
+    lede="Commerce général, import-export, agriculture et élevage, transport, BTP, services. Six portes d'entrée, une même maison, et une règle qui ne change pas : le prix affiché est le prix payé."
+    image="bafoussam-market"
+    imageAlt="Marché animé de Bafoussam sous la pluie"
+    imageCaption="Le marché de Bafoussam, au rythme des arrivages."
+    imagePosition="50% 45%"
+    meta={[
+      { label: 'Maison', value: 'Bafoussam, Cameroun' },
+      { label: 'Métiers', value: 'Six divisions complémentaires' },
+      { label: 'Commande', value: 'Un seul interlocuteur' },
+    ]}
+    primary={{ label: 'Demander un devis', href: '/devis' }}
+    secondary={{ label: 'La maison', href: '/la-maison' }}
+  />
+
+  <section class="page-section">
+    <div class="shell intro-split">
+      <div class="intro-copy" data-reveal>
+        <p class="eyebrow">La maison</p>
+        <h2>Une maison, <em>six portes.</em></h2>
+        <p class="lede">
+          Nos activités ne sont pas six entreprises posées côte à côte. Elles forment une chaîne :
+          ce qui est acheté doit être transporté, stocké, vendu ou construit dans de bonnes conditions.
+        </p>
+        <p>
+          Cette organisation nous permet de traiter une demande sans la découper en morceaux.
+          Vous avez un interlocuteur, un devis lisible et une réponse qui tient compte de l'ensemble
+          du trajet, pas seulement du prix d'une marchandise.
+        </p>
+        <ul class="intro-points">
+          <li>
+            <span aria-hidden="true">↳</span>
+            <span><strong>Une parole.</strong> Ce qui est confirmé est écrit ; ce qui change est annoncé avant.</span>
+          </li>
+          <li>
+            <span aria-hidden="true">↳</span>
+            <span><strong>Un prix.</strong> Le devis distingue la marchandise, le transport et les services.</span>
+          </li>
+          <li>
+            <span aria-hidden="true">↳</span>
+            <span><strong>Un suivi.</strong> Un interlocuteur connaît votre dossier et sait où en est la commande.</span>
+          </li>
+        </ul>
+        <div class="actions">
+          <Button href="/le-juste-prix" variant="dark" arrow="arrow-right">Nos engagements</Button>
+        </div>
+      </div>
+
+      <div class="media-stack" data-reveal>
+        <div class="media-stack__main" data-parallax>
+          <Figure
+            name="bafoussam-aerial"
+            alt="Vue aérienne de Bafoussam et de ses collines"
+            sizes="(max-width: 900px) 82vw, 40vw"
+          />
+        </div>
+        <div class="media-stack__inset">
+          <Figure
+            name="bafoussam-transport"
+            alt="Gare routière de Bafoussam avec cars et véhicules stationnés"
+            sizes="(max-width: 900px) 46vw, 22vw"
+          />
+        </div>
+        <span class="media-stack__label">
+          <strong>Bafoussam</strong>
+          Région de l'Ouest
+        </span>
+        <p class="media-stack__caption">Une ville de transit, de marchés et de chantiers.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft">
+    <div class="shell">
+      <SectionHead
+        index="02"
+        label="Les six métiers"
+        title="Chaque porte a <em>son métier.</em>"
+        intro="Six domaines, six manières de servir. Cliquez sur un métier pour voir les prestations, la méthode et les questions fréquentes."
+      />
+
+      <div class="division-ledger">
+        {
+          divisions.map((division, index) => {
+            const hero = divisionPageBySlug[division.slug]?.hero;
+            return (
+              <article class="division-row">
+                <a class="division-row__media img-zoom" href={`/${division.slug}`} aria-label={`Découvrir ${division.name}`}>
+                  <Figure
+                    name={hero?.image ?? division.image}
+                    alt={hero?.imageAlt ?? division.imageAlt}
+                    sizes="(max-width: 900px) 100vw, 45vw"
+                  />
+                  <span class="division-row__index">{division.number}</span>
+                </a>
+
+                <div class="division-row__copy">
+                  <p class="division-row__kicker">
+                    {division.kicker}
+                    <span aria-hidden="true">/</span>
+                    {division.shortName}
+                  </p>
+                  <h3>
+                    <a href={`/${division.slug}`}>{division.name}</a>
+                  </h3>
+                  <p>{division.summary}</p>
+                  <ul class="division-row__offers" aria-label={`Prestations ${division.name}`}>
+                    {division.offers.map((offer) => (
+                      <li>{offer}</li>
+                    ))}
+                  </ul>
+                  <a class="link-arrow" href={`/${division.slug}`}>
+                    Voir ce métier
+                    <Icon name="arrow-right" size={14} />
+                  </a>
+                </div>
+              </article>
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--night process-section on-dark">
+    <div class="shell">
+      <SectionHead
+        index="03"
+        label="La circulation"
+        title="Une commande peut passer <em>par plusieurs portes.</em>"
+        intro="Un produit importé peut être livré à un chantier. Une récolte peut être transportée puis vendue au comptoir. La maison suit le fil."
+      />
+      <ProcessSteps steps={steps} />
+      <div class="activities-process__foot">
+        <p class="process-aside__quote">« Une seule maison, un seul interlocuteur, une seule mesure. »</p>
+        <a class="link-arrow" href="/contact">
+          Parler de votre projet
+          <Icon name="arrow-right" size={14} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-quote">
+    <div class="shell page-quote__inner">
+      <span class="page-quote__seal"><Seal /></span>
+      <figure>
+        <blockquote>
+          <p>Des prix justes.<br />Une parole tenue.</p>
+        </blockquote>
+        <figcaption>La règle de la maison</figcaption>
+      </figure>
+      <span class="page-quote__seal page-quote__seal--end"><Seal /></span>
+    </div>
+  </section>
+
+  <CTABand
+    variant="dawn"
+    eyebrow="Un besoin, plusieurs métiers ?"
+    title="Une seule demande suffit."
+    text="Décrivez ce que vous cherchez. Nous identifions les divisions concernées, les questions à poser et les coûts à vérifier. Puis nous vous revenons avec une proposition claire."
+  />
+</BaseLayout>
+
+<style>
+  .division-ledger {
+    border-top: 1px solid var(--hair-dark);
+  }
+
+  .division-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: clamp(1.5rem, 5vw, 5rem);
+    align-items: center;
+    padding-block: clamp(1.6rem, 4vw, 3.2rem);
+    border-bottom: 1px solid var(--hair-dark);
+  }
+
+  .division-row:nth-child(even) .division-row__media {
+    order: 2;
+  }
+
+  .division-row__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--stone);
+  }
+
+  .division-row__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .division-row__index {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 2.8rem;
+    height: 2.8rem;
+    background: var(--gold);
+    color: var(--night);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  .division-row__kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+  }
+
+  .division-row__kicker span {
+    opacity: 0.5;
+  }
+
+  .division-row__copy h3 {
+    margin-top: 0.45rem;
+    font-size: clamp(2rem, 1.4rem + 1.8vw, 3.3rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .division-row__copy h3 a:hover {
+    color: var(--gold-deep);
+  }
+
+  .division-row__copy > p:not(.division-row__kicker) {
+    max-width: 50ch;
+    margin-top: 0.8rem;
+    font-size: 0.96rem;
+    line-height: 1.65;
+    color: var(--ink-muted);
+  }
+
+  .division-row__offers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.1rem;
+  }
+
+  .division-row__offers li {
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--hair-dark);
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .division-row__copy .link-arrow {
+    margin-top: 1.5rem;
+  }
+
+  .activities-process__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  @media (max-width: 900px) {
+    .division-row {
+      grid-template-columns: 1fr;
+      gap: 1.3rem;
+    }
+
+    .division-row:nth-child(even) .division-row__media {
+      order: initial;
+    }
+
+    .division-row__media {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .division-row {
+      padding-block: 1.5rem 2rem;
+    }
+
+    .division-row__copy h3 {
+      font-size: 2rem;
+    }
+
+    .activities-process__foot {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

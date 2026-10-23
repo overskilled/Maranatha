@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
+---
+
+<BaseLayout
+  title="Page introuvable"
+  description="Cette page n'existe pas ou a été déplacée. Retrouvez les activités, la maison et le carnet de Maranatha Le Juste Prix."
+>
+  <section class="notfound">
+    <div class="notfound__stars" aria-hidden="true"></div>
+    <div class="notfound__inner">
+      <span class="notfound__code" aria-hidden="true">404</span>
+      <h1>Cette page n'est pas <em>au bon endroit.</em></h1>
+      <p>
+        Le lien est peut-être ancien, incomplet, ou la page a changé de place. La maison reste
+        ouverte : reprenez par l'accueil ou par l'un de nos métiers.
+      </p>
+      <div class="actions">
+        <Button href="/" variant="gold" arrow="arrow-right">Retour à l'accueil</Button>
+        <Button href="/devis" variant="outline" arrow="arrow-up-right">Demander un devis</Button>
+      </div>
+      <nav class="notfound__links" aria-label="Liens utiles">
+        <a href="/activites">Activités</a>
+        <a href="/la-maison">La maison</a>
+        <a href="/le-juste-prix">Le juste prix</a>
+        <a href="/carnet">Carnet</a>
+        <a href="/contact">Contact</a>
+      </nav>
+    </div>
+  </section>
+</BaseLayout>

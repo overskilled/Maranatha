@@ -1,0 +1,930 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Figure from '../components/Figure.astro';
+import Button from '../components/Button.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Icon from '../components/Icon.astro';
+import Seal from '../components/Seal.astro';
+import { site } from '../data/site';
+import { divisions } from '../data/divisions';
+import { articles } from '../data/articles';
+import '../styles/home.css';
+
+const promises = [
+  {
+    title: 'Le prix affiché est le prix payé.',
+    text: "Les frais éventuels sont annoncés avant la commande. Jamais ajoutés à la caisse.",
+  },
+  {
+    title: 'La marchandise est celle qui a été convenue.',
+    text: 'Même qualité, même quantité, même provenance. Pas de substitution silencieuse.',
+  },
+  {
+    title: 'La balance est visible.',
+    text: 'Ce qui se pèse se pèse devant vous. Ce qui se compte se compte avec vous.',
+  },
+  {
+    title: 'Un délai annoncé est un délai tenu.',
+    text: "Si un imprévu arrive, vous êtes prévenu avant l'échéance, pas après.",
+  },
+  {
+    title: "Un refus clair vaut mieux qu'une promesse floue.",
+    text: 'Si nous ne pouvons pas, nous le disons. Et nous cherchons une autre voie.',
+  },
+];
+
+const refusals = [
+  "Les prix d'appel qui changent à la caisse.",
+  'Les balances qui penchent.',
+  'Les marchandises promises, puis remplacées.',
+  'Les délais inventés pour gagner la commande.',
+  'Les belles paroles au comptoir, sans suite à la livraison.',
+];
+
+const rayons = [
+  {
+    number: '01',
+    title: 'Épicerie & quotidien',
+    text: 'Riz, huiles, condiments, boissons, produits d’entretien.',
+    image: 'grocery-cans',
+    alt: 'Rayons d’épicerie remplis de conserves et de produits du quotidien',
+  },
+  {
+    number: '02',
+    title: 'Quincaillerie & matériaux',
+    text: 'Outils, visserie, plomberie, peinture, ciment.',
+    image: 'hardware-fasteners',
+    alt: 'Bacs de visserie, boulons et petites pièces de quincaillerie',
+  },
+  {
+    number: '03',
+    title: 'Textiles & maison',
+    text: 'Pagnes, tissus, linge et articles pour la maison.',
+    image: 'fabrics-stack',
+    alt: 'Piles de tissus africains aux motifs colorés',
+  },
+  {
+    number: '04',
+    title: 'Produits frais & marché',
+    text: 'Fruits, légumes, céréales, tubercules.',
+    image: 'market-tomatoes',
+    alt: 'Étal de tomates fraîches sur un marché',
+  },
+];
+
+const services = [
+  {
+    number: '01',
+    title: 'Achat sur commande',
+    text: 'Vous décrivez le produit. Nous cherchons, nous chiffrons, nous vous répondons.',
+  },
+  {
+    number: '02',
+    title: 'Approvisionnement régulier',
+    text: 'Pour les commerces, chantiers, fermes et institutions qui ont besoin de flux.',
+  },
+  {
+    number: '03',
+    title: 'Regroupement & livraison',
+    text: 'Plusieurs achats, un seul enlèvement, un seul interlocuteur.',
+  },
+  {
+    number: '04',
+    title: 'Conseil produit',
+    text: 'Choisir la bonne référence, la bonne quantité et le bon niveau de qualité.',
+  },
+  {
+    number: '05',
+    title: 'Accompagnement de projet',
+    text: "De l'estimation des besoins au suivi des approvisionnements.",
+  },
+];
+
+const featuredArticle = articles[0];
+const secondaryArticles = articles.slice(1, 3);
+---
+
+<BaseLayout
+  title="Maranatha Le Juste Prix · Commerce et services à Bafoussam"
+  titleSuffix={false}
+  description={site.description}
+  bodyClass="home"
+>
+  <!-- 01 · Hero -->
+  <section class="home-hero">
+    <div class="home-hero__stars" aria-hidden="true"></div>
+
+    <div class="shell home-hero__shell">
+      <div class="home-hero__copy">
+        
+
+        <h1 class="home-hero__title">
+          <span class="home-hero__line"><span>Le juste prix,</span></span>
+          <span class="home-hero__line home-hero__line--gold"><span>en pleine</span></span>
+          <span class="home-hero__line home-hero__line--gold"><span>lumière.</span></span>
+        </h1>
+
+        <p class="home-hero__lede">
+          Commerce général, import-export, agriculture et élevage, transport, BTP et services.
+          Une seule maison, une seule mesure : ce qui est dit est fait.
+        </p>
+
+        <div class="actions home-hero__actions">
+          <Button href="/devis" variant="gold" arrow="arrow-up-right">Demander un devis</Button>
+          <Button href="/activites" variant="outline">Explorer les activités</Button>
+        </div>
+
+        <p class="home-hero__pledge">
+          <Icon name="check" size={14} strokeWidth={1.8} />
+          Prix affichés
+          <span aria-hidden="true">·</span>
+          Marchandise contrôlée
+          <span aria-hidden="true">·</span>
+          Parole tenue
+        </p>
+      </div>
+
+      <div class="home-hero__stage">
+        <div class="home-hero__arch">
+          <Figure
+            name="market-oranges"
+            alt="Vendeuse de fruits arrangeant des oranges sur son étal de marché"
+            sizes="(max-width: 980px) 100vw, 38vw"
+            loading="eager"
+            fetchpriority="high"
+            position="50% 42%"
+          />
+        </div>
+
+        <div class="home-hero__seal">
+          <Seal />
+        </div>
+
+        <aside class="receipt" aria-label="Reçu de parole">
+          <div class="receipt__head">
+            <img src="/logo-mark.svg" alt="" width="34" height="34" />
+            <div class="receipt__identity">
+              <span class="receipt__brand">Maranatha</span>
+              <span class="receipt__sub">Le Juste Prix · Reçu de parole</span>
+            </div>
+            <span class="receipt__number">N° 001</span>
+          </div>
+
+          <div class="receipt__rule" aria-hidden="true"></div>
+
+          <div class="receipt__row">
+            <span>Prix affiché</span>
+            <i class="receipt__dots" aria-hidden="true"></i>
+            <strong>18 500 F</strong>
+          </div>
+          <div class="receipt__row">
+            <span>Prix payé</span>
+            <i class="receipt__dots" aria-hidden="true"></i>
+            <strong>18 500 F</strong>
+          </div>
+          <div class="receipt__row receipt__row--total">
+            <span>Écart</span>
+            <i class="receipt__dots" aria-hidden="true"></i>
+            <strong>0 F</strong>
+          </div>
+
+          <div class="receipt__rule" aria-hidden="true"></div>
+          <p class="receipt__note">Ceci est une promesse, pas une facture.</p>
+          <div class="receipt__barcode" aria-hidden="true"></div>
+          <span class="receipt__stamp" aria-hidden="true">Juste</span>
+        </aside>
+
+      </div>
+    </div>
+
+    <div class="home-hero__index">
+      <div class="shell home-hero__index-inner">
+        <p class="label">Nos métiers</p>
+        <ul>
+          {
+            divisions.map((division) => (
+              <li>
+                <a href={`/${division.slug}`}>
+                  <span>{division.number}</span>
+                  {division.shortName}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <a class="home-hero__scroll" href="#promesse">
+          Défiler
+          <span class="home-hero__scroll-line" aria-hidden="true"></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 · La promesse -->
+  <section class="promise section" id="promesse">
+    <div class="shell">
+      <SectionHead
+        index="01"
+        label="La promesse"
+        title="Une maison de commerce, <em>pas un numéro.</em>"
+        intro="Nous vendons des produits et des services. Mais ce que nous protégeons d'abord, c'est la confiance. Elle ne se décrète pas : elle se vérifie à chaque pesée, chaque devis, chaque livraison."
+      />
+
+      <div class="promise__grid">
+        <div class="promise__list" data-reveal-group>
+          {
+            promises.map((promise, index) => (
+              <article class="promise__item">
+                <span class="promise__num">{String(index + 1).padStart(2, '0')}</span>
+                <div>
+                  <h3>{promise.title}</h3>
+                  <p>{promise.text}</p>
+                </div>
+              </article>
+            ))
+          }
+          <a class="link-arrow promise__link" href="/le-juste-prix">
+            Lire nos engagements
+            <Icon name="arrow-right" size={14} />
+          </a>
+        </div>
+
+        <div class="promise__side">
+          <figure class="promise__photo">
+            <div class="fig promise__photo-frame" data-parallax>
+              <Figure
+                name="shopkeeper-grains"
+                alt="Commerçant comptant des billets dans sa boutique"
+                sizes="(max-width: 980px) 100vw, 42vw"
+              />
+            </div>
+            <figcaption>Le prix se dit avant. Il ne se renégocie pas après.</figcaption>
+          </figure>
+
+          <div class="promise__refusals" data-reveal>
+            <p class="label">Ce que nous refusons</p>
+            <ul>
+              {refusals.map((refusal) => <li>{refusal}</li>)}
+            </ul>
+          </div>
+
+          <blockquote class="promise__verse" data-reveal>
+            <p>« {site.scripture.text} »</p>
+            <cite>{site.scripture.reference}</cite>
+          </blockquote>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · Les six métiers -->
+  <section class="metiers section--night" id="metiers">
+    <div class="shell">
+      <SectionHead
+        index="02"
+        label="Nos métiers"
+        title="Six portes. <em>La même maison.</em>"
+        intro="Chaque métier a ses gestes, ses délais et ses risques. Une seule règle les traverse : dire vrai et livrer juste."
+      />
+    </div>
+
+    <div class="metiers__track" data-reveal>
+      {
+        divisions.map((division, index) => (
+          <article class:list={['metier', index === 0 && 'is-active']} data-metier>
+            <div class="metier__bg">
+              <Figure
+                name={division.image}
+                alt={division.imageAlt}
+                sizes="(max-width: 980px) 100vw, 30vw"
+              />
+            </div>
+            <div class="metier__shade" aria-hidden="true"></div>
+
+            <button
+              class="metier__toggle"
+              type="button"
+              data-metier-toggle
+              aria-expanded={index === 0 ? 'true' : 'false'}
+              aria-controls={`metier-panel-${division.slug}`}
+              aria-label={`Découvrir ${division.name}`}
+            />
+
+            <div class="metier__content" id={`metier-panel-${division.slug}`}>
+              <div class="metier__top">
+                <span class="metier__num">{division.number}</span>
+                <span class="metier__kicker">{division.kicker}</span>
+              </div>
+
+              <div class="metier__bottom">
+                <h3>{division.name}</h3>
+                <p>{division.summary}</p>
+                <ul>
+                  {division.offers.map((offer) => <li>{offer}</li>)}
+                </ul>
+                <a class="metier__link" href={`/${division.slug}`}>
+                  Découvrir
+                  <Icon name="arrow-up-right" size={14} />
+                </a>
+              </div>
+            </div>
+
+            <span class="metier__vertical" aria-hidden="true">{division.name}</span>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="shell metiers__foot">
+      <p>Un seul interlocuteur peut coordonner plusieurs métiers.</p>
+      <a class="link-arrow" href="/activites">
+        Voir toutes les activités
+        <Icon name="arrow-right" size={14} />
+      </a>
+    </div>
+  </section>
+
+  <!-- 04 · Le comptoir -->
+  <section class="comptoir section" id="commerce">
+    <div class="shell">
+      <SectionHead
+        index="03"
+        label="Le comptoir · Commerce général"
+        title="De quoi remplir la maison, le champ et le chantier."
+        intro="Un commerce général, au sens large. Ce qui manque à votre quotidien, à votre activité ou à votre chantier peut souvent se trouver chez nous, ou être commandé."
+      />
+
+      <div class="comptoir__grid">
+        <figure class="comptoir__feature">
+          <div class="fig comptoir__feature-img" data-parallax>
+            <Figure
+              name="grocery-aisle"
+              alt="Allée d'un commerce général avec des étagères et des produits variés"
+              sizes="(max-width: 980px) 100vw, 52vw"
+              position="50% 50%"
+            />
+          </div>
+          <div class="comptoir__tag" aria-label="Prix affiché égal prix payé">
+            <span>Prix affiché</span>
+            <strong>= Prix payé</strong>
+          </div>
+          <figcaption>Épicerie, quincaillerie, textiles, produits frais. Ce qui manque se commande.</figcaption>
+        </figure>
+
+        <div class="comptoir__side">
+          <div class="comptoir__modes">
+            <p class="label">Acheter chez nous</p>
+            <div class="comptoir__mode">
+              <span>01</span>
+              <div>
+                <h3>Au détail</h3>
+                <p>Pour la maison, la cuisine, le chantier ou le champ. Sans quantité minimum.</p>
+              </div>
+            </div>
+            <div class="comptoir__mode">
+              <span>02</span>
+              <div>
+                <h3>En gros</h3>
+                <p>Pour les commerces, les institutions et les chantiers qui approvisionnent.</p>
+              </div>
+            </div>
+            <div class="comptoir__mode">
+              <span>03</span>
+              <div>
+                <h3>Sur commande</h3>
+                <p>Une référence précise ? Nous la cherchons et revenons avec un prix clair.</p>
+              </div>
+            </div>
+          </div>
+
+          <a class="link-arrow" href="/commerce">
+            Voir le commerce
+            <Icon name="arrow-right" size={14} />
+          </a>
+        </div>
+      </div>
+
+      <div class="comptoir__rayons" data-reveal-group>
+        {
+          rayons.map((rayon) => (
+            <a class="rayon" href="/commerce#rayons">
+              <span class="rayon__num">{rayon.number}</span>
+              <span class="rayon__thumb">
+                <Figure name={rayon.image} alt={rayon.alt} sizes="120px" />
+              </span>
+              <span class="rayon__body">
+                <strong>{rayon.title}</strong>
+                <em>{rayon.text}</em>
+              </span>
+              <span class="rayon__arrow">
+                <Icon name="arrow-up-right" size={16} />
+              </span>
+            </a>
+          ))
+        }
+      </div>
+
+      <div class="comptoir__foot" data-reveal>
+        <p>
+          <span class="label">Une référence précise ?</span>
+          Dites-nous ce qu'il vous faut. Nous vous répondons avec un prix et une disponibilité.
+        </p>
+        <Button href="/devis" variant="dark" arrow="arrow-up-right">Demander un prix</Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · Import-export -->
+  <section class="importation section--night-deep" id="import">
+    <div class="importation__grid-bg" aria-hidden="true"></div>
+    <div class="shell">
+      <SectionHead
+        index="04"
+        label="Import-export · La route"
+        title="Nous allons chercher loin <em>ce qui manque ici.</em>"
+        intro="Pas seulement à l'achat. Jusqu'à la remise. Vous savez ce qui a été acheté, ce qui a été payé et quand cela arrive."
+      />
+
+      <div class="importation__grid">
+        <div class="importation__copy">
+          <p class="lede">
+            De la commande à la réception, nous suivons la marchandise. Le prix est décomposé,
+            les étapes sont dites, la marchandise est contrôlée.
+          </p>
+
+          <div class="importation__assurances">
+            <div>
+              <Icon name="check" size={15} strokeWidth={1.8} />
+              <span><strong>Prix décomposé</strong>Marchandise, fret et frais, distingués.</span>
+            </div>
+            <div>
+              <Icon name="check" size={15} strokeWidth={1.8} />
+              <span><strong>Étapes suivies</strong>Vous savez où en est la marchandise.</span>
+            </div>
+            <div>
+              <Icon name="check" size={15} strokeWidth={1.8} />
+              <span><strong>Contrôle à réception</strong>Avant la remise au lieu convenu.</span>
+            </div>
+            <div>
+              <Icon name="check" size={15} strokeWidth={1.8} />
+              <span><strong>Un interlocuteur</strong>Une seule personne suit le dossier.</span>
+            </div>
+          </div>
+
+          <div class="actions importation__actions">
+            <Button href="/devis" variant="gold" arrow="arrow-up-right">Confier un approvisionnement</Button>
+            <Button href="/import-export" variant="outline">Comprendre la route</Button>
+          </div>
+        </div>
+
+        <figure class="importation__media">
+          <div class="fig importation__image" data-parallax>
+            <Figure
+              name="port-cranes"
+              alt="Grues portuaires au crépuscule devant des navires de fret"
+              sizes="(max-width: 980px) 100vw, 44vw"
+            />
+          </div>
+          <div class="importation__badge">
+            <span class="label">Traçabilité</span>
+            <strong>Chaque étape, dite.</strong>
+          </div>
+          <figcaption>Le fret se suit. La marchandise se contrôle.</figcaption>
+        </figure>
+      </div>
+
+      <div class="route" data-route data-reveal>
+        <div class="route__head">
+          <p class="label">Le chemin d'une commande</p>
+          <p>Du fournisseur à votre lieu de livraison.</p>
+        </div>
+
+        <div class="route__line" aria-hidden="true">
+          <span class="route__progress" data-route-line></span>
+          <span class="route__dot"></span>
+          <span class="route__dot"></span>
+          <span class="route__dot"></span>
+          <span class="route__dot"></span>
+          <span class="route__dot"></span>
+        </div>
+
+        <ol class="route__nodes">
+          <li>
+            <span>01</span>
+            <strong>Fournisseur</strong>
+            <p>Besoin, quantité, qualité attendue.</p>
+          </li>
+          <li>
+            <span>02</span>
+            <strong>Port de départ</strong>
+            <p>Achat et contrôle avant le fret.</p>
+          </li>
+          <li>
+            <span>03</span>
+            <strong>Douala</strong>
+            <p>Dédouanement et réception.</p>
+          </li>
+          <li>
+            <span>04</span>
+            <strong>Bafoussam</strong>
+            <p>Contrôle et regroupement.</p>
+          </li>
+          <li>
+            <span>05</span>
+            <strong>Votre lieu</strong>
+            <p>Remise au lieu convenu.</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 · Agriculture & élevage -->
+  <section class="champ" id="agriculture">
+    <div class="champ__bg" data-parallax>
+      <Figure
+        name="maize-field"
+        alt="Agricultrice dans un champ de maïs"
+        sizes="100vw"
+        position="50% 55%"
+      />
+    </div>
+    <div class="champ__veil" aria-hidden="true"></div>
+
+    <div class="shell champ__inner">
+      <div class="champ__head">
+        <p class="section-head__index" data-reveal><span>05</span> Le champ · Agriculture & élevage</p>
+        <h2 data-reveal>Travailler la terre. <em>Nourrir la maison.</em></h2>
+        <p class="lede" data-reveal>
+          Cultures, intrants, élevage, collecte. Nous accompagnons ce qui pousse et ce qui s'élève,
+          avec les contraintes du réel : la saison, le sol, le prix du marché.
+        </p>
+      </div>
+
+      <div class="champ__layout">
+        <div class="champ__gallery" data-reveal-group>
+          <figure>
+            <div class="fig">
+              <Figure
+                name="maize-hand"
+                alt="Main tenant un épi de maïs fraîchement récolté"
+                sizes="(max-width: 980px) 50vw, 20vw"
+              />
+            </div>
+            <figcaption>La récolte se pèse. Elle ne s'estime pas.</figcaption>
+          </figure>
+          <figure>
+            <div class="fig">
+              <Figure
+                name="poultry"
+                alt="Poule accompagnée de ses poussins sur un terrain herbeux"
+                sizes="(max-width: 980px) 50vw, 20vw"
+              />
+            </div>
+            <figcaption>La volaille, du poussin au marché.</figcaption>
+          </figure>
+          <figure>
+            <div class="fig">
+              <Figure
+                name="cattle-sunset"
+                alt="Éleveur guidant son troupeau de zébus au coucher du soleil"
+                sizes="(max-width: 980px) 50vw, 20vw"
+              />
+            </div>
+            <figcaption>Le bétail se suit, pas seulement se vend.</figcaption>
+          </figure>
+        </div>
+
+        <aside class="fieldnote" data-reveal>
+          <div class="fieldnote__head">
+            <span class="label">Note de champ</span>
+            <span>N° 03</span>
+          </div>
+
+          <div class="fieldnote__group">
+            <h3>Cultures</h3>
+            <p>Maïs, haricot, tomate, plantain, tubercules, légumes.</p>
+          </div>
+          <div class="fieldnote__group">
+            <h3>Élevage</h3>
+            <p>Volaille, porc, bovin, petits ruminants.</p>
+          </div>
+          <div class="fieldnote__group">
+            <h3>Appui</h3>
+            <p>Intrants, collecte, transport, mise en marché.</p>
+          </div>
+
+          <p class="fieldnote__buy">
+            Nous achetons aussi la production locale, selon la qualité, le volume et la saison.
+          </p>
+
+          <a class="link-arrow" href="/agriculture-elevage">
+            Voir le pôle agricole
+            <Icon name="arrow-right" size={14} />
+          </a>
+
+          <span class="fieldnote__stamp" aria-hidden="true">Juste</span>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 · Transport & BTP -->
+  <section class="duo" id="transport-btp">
+    <article class="duo__half duo__half--transport">
+      <figure class="duo__media">
+        <Figure
+          name="truck-road"
+          alt="Camions sur une piste de terre dans une région rurale"
+          sizes="(max-width: 900px) 100vw, 50vw"
+        />
+        <span class="duo__number" aria-hidden="true">04</span>
+      </figure>
+      <div class="duo__body">
+        <p class="eyebrow">Transport · Le convoi</p>
+        <h2>Ce qui doit arriver <em>arrive.</em></h2>
+        <p>
+          Marchandises, matériaux, équipements et véhicules. Nous organisons le chargement,
+          le trajet et la remise, à Bafoussam et dans la région.
+        </p>
+        <ul class="duo__list">
+          <li>Transport de marchandises</li>
+          <li>Livraison de commandes</li>
+          <li>Transport de matériaux</li>
+          <li>Coordination de chargement</li>
+        </ul>
+        <p class="duo__note">Un devis avant le chargement, pas après.</p>
+        <Button href="/transport" variant="outline" size="sm" arrow="arrow-up-right">
+          Organiser un transport
+        </Button>
+      </div>
+    </article>
+
+    <article class="duo__half duo__half--btp">
+      <figure class="duo__media">
+        <Figure
+          name="construction-bricks"
+          alt="Ouvriers sur un chantier manipulant des briques de terre"
+          sizes="(max-width: 900px) 100vw, 50vw"
+        />
+        <span class="duo__number" aria-hidden="true">05</span>
+      </figure>
+      <div class="duo__body">
+        <p class="eyebrow">BTP · Le chantier</p>
+        <h2>Bâtir ce qui doit <em>durer.</em></h2>
+        <p>
+          Matériaux, construction et rénovation. Un chantier se prépare avant le premier sac
+          de ciment : devis, quantités, approvisionnement, suivi.
+        </p>
+        <ul class="duo__list">
+          <li>Fourniture de matériaux</li>
+          <li>Construction</li>
+          <li>Rénovation</li>
+          <li>Travaux et finitions</li>
+        </ul>
+        <p class="duo__note">Un devis après visite, pas sur une estimation de comptoir.</p>
+        <Button href="/btp" variant="dark" size="sm" arrow="arrow-up-right">
+          Parler d'un chantier
+        </Button>
+      </div>
+    </article>
+  </section>
+
+  <!-- 08 · Services -->
+  <section class="services-home section" id="services">
+    <div class="shell">
+      <SectionHead
+        index="07"
+        label="Services · Le service"
+        title="Commander, c'est déjà <em>un service.</em>"
+        intro="Toutes les maisons n'ont pas un service achat. Nous pouvons chercher, chiffrer, acheter, regrouper et livrer pour vous."
+      />
+
+      <div class="services-home__grid">
+        <div class="services-home__side">
+          <figure class="services-home__photo">
+            <div class="fig" data-parallax>
+              <Figure
+                name="fabric-seller"
+                alt="Vendeuse de tissus africains arrangeant des pièces colorées sur son étal"
+                sizes="(max-width: 980px) 100vw, 34vw"
+              />
+            </div>
+            <figcaption>Nous prenons le temps de comprendre avant de chiffrer.</figcaption>
+          </figure>
+          <blockquote class="services-home__quote">
+            « Un besoin mal décrit coûte cher. Prenez le temps de nous dire l'usage, la quantité et le délai. »
+          </blockquote>
+        </div>
+
+        <div class="services-home__list" data-reveal-group>
+          {
+            services.map((service) => (
+              <a class="service-row" href="/services">
+                <span class="service-row__num">{service.number}</span>
+                <span class="service-row__body">
+                  <strong>{service.title}</strong>
+                  <em>{service.text}</em>
+                </span>
+                <span class="service-row__arrow">
+                  <Icon name="arrow-up-right" size={16} />
+                </span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="services-home__strip" data-reveal>
+        <div>
+          <p class="label">Pour bien servir, dites-nous</p>
+          <ul>
+            <li>L'usage</li>
+            <li>La quantité</li>
+            <li>La qualité</li>
+            <li>Le délai</li>
+            <li>Le lieu</li>
+          </ul>
+        </div>
+        <Button href="/devis" variant="gold" arrow="arrow-up-right">Décrire un besoin</Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 · La maison + carnet -->
+  <section class="maison" id="maison">
+    <div class="maison__stars" aria-hidden="true"></div>
+    <div class="shell">
+      <div class="maison__grid">
+        <div class="maison__media">
+          <figure class="maison__photo">
+            <div class="fig" data-parallax>
+              <Figure
+                name="bafoussam-village"
+                alt="Porte traditionnelle décorée dans une concession de Bafoussam"
+                sizes="(max-width: 980px) 100vw, 44vw"
+              />
+            </div>
+            <figcaption>Bafoussam, Région de l'Ouest, Cameroun.</figcaption>
+          </figure>
+          <figure class="maison__inset">
+            <Figure
+              name="shopkeeper-bw"
+              alt="Portrait en noir et blanc d'un commerçant souriant"
+              sizes="180px"
+            />
+          </figure>
+          <span class="maison__seal" aria-hidden="true">
+            <Seal />
+          </span>
+        </div>
+
+        <div class="maison__copy">
+          <p class="section-head__index" data-reveal><span>08</span> La maison</p>
+          <h2 data-reveal>Maranatha. <em>Le Seigneur vient.</em></h2>
+          <p class="lede" data-reveal>
+            Notre nom est une prière ancienne. Il nous rappelle que ce que nous faisons
+            aujourd'hui sera vu demain. Nous travaillons comme des gens qui rendront des comptes.
+          </p>
+          <p class="body-copy" data-reveal>
+            Ets Maranatha Le Juste Prix est une maison de Bafoussam. Commerce général,
+            import-export, agriculture et élevage, transport, BTP et services. Une entreprise
+            chrétienne, ouverte à tous, tenue à la même mesure pour tous.
+          </p>
+          <blockquote class="maison__verse" data-reveal>
+            <p>« {site.scripture.text} »</p>
+            <cite>{site.scripture.reference}</cite>
+          </blockquote>
+          <a class="link-arrow" href="/la-maison" data-reveal>
+            Lire notre histoire
+            <Icon name="arrow-right" size={14} />
+          </a>
+        </div>
+      </div>
+
+      <div class="carnet">
+        <div class="carnet__head" data-reveal>
+          <div>
+            <p class="label">Le carnet</p>
+            <h2>Notes de comptoir.</h2>
+          </div>
+          <a class="link-arrow" href="/carnet">
+            Tous les articles
+            <Icon name="arrow-right" size={14} />
+          </a>
+        </div>
+
+        <div class="carnet__grid">
+          <a class="carnet-feature" href={`/carnet/${featuredArticle.slug}`} data-reveal>
+            <div class="fig carnet-feature__image">
+              <Figure
+                name={featuredArticle.image}
+                alt={featuredArticle.imageAlt}
+                sizes="(max-width: 980px) 100vw, 46vw"
+              />
+            </div>
+            <div class="carnet-feature__meta">
+              <span>{featuredArticle.category}</span>
+              <span>{featuredArticle.readTime} de lecture</span>
+            </div>
+            <h3>{featuredArticle.title}</h3>
+            <p>{featuredArticle.excerpt}</p>
+            <span class="carnet-feature__arrow">
+              <Icon name="arrow-up-right" size={16} />
+            </span>
+          </a>
+
+          <div class="carnet-list">
+            {
+              secondaryArticles.map((article) => (
+                <a class="carnet-row" href={`/carnet/${article.slug}`}>
+                  <span class="carnet-row__thumb">
+                    <Figure name={article.image} alt={article.imageAlt} sizes="180px" />
+                  </span>
+                  <span class="carnet-row__body">
+                    <span class="carnet-row__meta">{article.category} · {article.readTime}</span>
+                    <strong>{article.title}</strong>
+                    <em>{article.excerpt}</em>
+                  </span>
+                  <Icon name="arrow-up-right" size={15} />
+                </a>
+              ))
+            }
+            <a class="carnet-list__all link-arrow" href="/carnet">
+              Lire le carnet
+              <Icon name="arrow-right" size={14} />
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · Contact -->
+  <section class="contact-home" id="contact">
+    <div class="contact-home__stars" aria-hidden="true"></div>
+    <div class="shell">
+      <div class="contact-home__head">
+        <p class="section-head__index" data-reveal><span>09</span> La porte</p>
+        <h2 data-reveal>Dites-nous <em>ce qu'il vous faut.</em></h2>
+        <p class="lede" data-reveal>
+          Un produit à trouver, une commande à livrer, un chantier à approvisionner, un champ
+          à préparer. Écrivez-nous ou passez nous voir. Nous vous répondrons avec des questions
+          précises, puis une proposition claire.
+        </p>
+        <div class="actions contact-home__actions" data-reveal>
+          <Button href="/devis" variant="dark" arrow="arrow-up-right">Demander un devis</Button>
+          <a class="contact-home__wa" href={site.whatsappHref} target="_blank" rel="noopener noreferrer">
+            <Icon name="whatsapp" size={16} />
+            Écrire sur WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <div class="contact-home__details" data-reveal-group>
+        <div class="contact-card">
+          <Icon name="pin" size={18} />
+          <span class="label">Nous trouver</span>
+          <strong>{site.address}</strong>
+        </div>
+        <a class="contact-card" href={site.phoneHref}>
+          <Icon name="phone" size={18} />
+          <span class="label">Téléphone</span>
+          <strong>{site.phoneDisplay}</strong>
+        </a>
+        <a class="contact-card" href={site.whatsappHref} target="_blank" rel="noopener noreferrer">
+          <Icon name="whatsapp" size={18} />
+          <span class="label">WhatsApp</span>
+          <strong>{site.whatsappDisplay}</strong>
+        </a>
+        <a class="contact-card" href={site.emailHref}>
+          <Icon name="mail" size={18} />
+          <span class="label">E-mail</span>
+          <strong>{site.email}</strong>
+        </a>
+        <div class="contact-card">
+          <Icon name="clock" size={18} />
+          <span class="label">Horaires</span>
+          <strong>{site.hours}</strong>
+        </div>
+      </div>
+
+      <figure class="contact-home__image" data-reveal>
+        <div class="fig contact-home__image-frame" data-parallax>
+          <Figure
+            name="bafoussam-aerial"
+            alt="Vue aérienne de Bafoussam sous un ciel de saison des pluies"
+            sizes="100vw"
+            position="50% 60%"
+          />
+        </div>
+        <figcaption>
+          <span>Bafoussam, notre base.</span>
+          Une maison enracinée, ouverte sur la région et sur le monde.
+        </figcaption>
+      </figure>
+
+      <p class="contact-home__sign" data-reveal>Maranatha, le Seigneur vient.</p>
+    </div>
+  </section>
+</BaseLayout>

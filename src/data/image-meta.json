@@ -1,0 +1,480 @@
+{
+  "bafoussam-aerial": {
+    "width": 1800,
+    "height": 851,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "bafoussam-city": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "bafoussam-field": {
+    "width": 800,
+    "height": 533,
+    "widths": [
+      800
+    ]
+  },
+  "bafoussam-harvest": {
+    "width": 1800,
+    "height": 2696,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "bafoussam-market-b": {
+    "width": 800,
+    "height": 379,
+    "widths": [
+      800
+    ]
+  },
+  "bafoussam-market": {
+    "width": 1800,
+    "height": 1013,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "bafoussam-rain": {
+    "width": 1800,
+    "height": 1201,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "bafoussam-street": {
+    "width": 1800,
+    "height": 1013,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "bafoussam-transport": {
+    "width": 1800,
+    "height": 810,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "bafoussam-village": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "cattle-field": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "cattle-herd": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "cattle-market": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "cattle-sunset": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "construction-bricks": {
+    "width": 1800,
+    "height": 2390,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "construction-foundation": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "construction-plaster": {
+    "width": 1800,
+    "height": 1013,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "construction-rebar": {
+    "width": 1800,
+    "height": 2391,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "construction-scaffold": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "delivery-city": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "delivery-moto": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "fabric-portrait": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "fabric-seller": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "fabrics-stack": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "grocery-aisle": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "grocery-cans": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "grocery-dairy": {
+    "width": 1800,
+    "height": 1013,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "grocery-drinks": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "hardware-fasteners": {
+    "width": 1800,
+    "height": 1350,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "hardware-shop": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "hardware-shopkeeper": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "hardware-tools": {
+    "width": 1800,
+    "height": 1350,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "hero-market": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "maize-farmer": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "maize-field": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "maize-hand": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "maize-market": {
+    "width": 1800,
+    "height": 2400,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "market-bananas": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "market-grains": {
+    "width": 1800,
+    "height": 2520,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "market-oranges": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "market-tomatoes": {
+    "width": 1800,
+    "height": 1440,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "port-cargo": {
+    "width": 1800,
+    "height": 1177,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "port-containers": {
+    "width": 1800,
+    "height": 1350,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "port-cranes": {
+    "width": 1800,
+    "height": 1207,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "port-night": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "poultry-farm": {
+    "width": 1800,
+    "height": 1226,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "poultry": {
+    "width": 1800,
+    "height": 1306,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "shopkeeper-bw": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "shopkeeper-counter": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "shopkeeper-grains": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "shopkeeper-man": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "shopkeeper-portrait": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "shopkeeper-store": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "truck-highway": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "truck-loaded": {
+    "width": 1800,
+    "height": 2696,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "truck-road": {
+    "width": 1800,
+    "height": 1220,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "warehouse-aisle": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "warehouse-pallets": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "warehouse-team": {
+    "width": 1800,
+    "height": 1200,
+    "widths": [
+      800,
+      1800
+    ]
+  },
+  "warehouse-worker": {
+    "width": 1800,
+    "height": 2700,
+    "widths": [
+      800,
+      1800
+    ]
+  }
+}

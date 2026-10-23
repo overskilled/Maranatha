@@ -1,0 +1,358 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import Faq from '../components/Faq.astro';
+import CTABand from '../components/CTABand.astro';
+import Figure from '../components/Figure.astro';
+import Button from '../components/Button.astro';
+import Icon from '../components/Icon.astro';
+import type { Division } from '../data/divisions';
+import { divisionBySlug } from '../data/divisions';
+import { divisionPages, type DivisionPage } from '../data/division-pages';
+
+export function getStaticPaths() {
+  return divisionPages.map((page: DivisionPage) => ({
+    params: { slug: page.slug },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props as { page: DivisionPage };
+const division = divisionBySlug[page.slug] as Division | undefined;
+
+if (!division) {
+  throw new Error(`Unknown division: ${page.slug}`);
+}
+
+const related = page.related
+  .map((slug) => divisionBySlug[slug] as Division | undefined)
+  .filter((item): item is Division => Boolean(item));
+
+const nextLabel = division.number === '06' ? 'Activités' : 'La maison';
+const nextHref = division.number === '06' ? '/activites' : '/la-maison';
+---
+
+<BaseLayout title={page.seoTitle} description={page.seoDescription}>
+  <PageHero
+    index={division.number}
+    label={division.name}
+    title={page.hero.title}
+    lede={page.hero.lede}
+    image={page.hero.image}
+    imageAlt={page.hero.imageAlt}
+    imageCaption={page.hero.caption}
+    imagePosition={page.hero.position}
+    parent={{ label: 'Activités', href: '/activites' }}
+    meta={page.meta}
+    primary={{ label: 'Demander un devis', href: '/devis' }}
+    secondary={{ label: 'Nous écrire', href: '/contact' }}
+  />
+
+  <section class="page-section">
+    <div class="shell intro-split">
+      <div class="intro-copy" data-reveal>
+        <p class="eyebrow">{division.number} · {page.intro.label}</p>
+        <h2 set:html={page.intro.title} />
+        {page.intro.body.map((paragraph) => <p>{paragraph}</p>)}
+        <ul class="intro-points">
+          {
+            page.intro.points.map((point) => (
+              <li>
+                <span aria-hidden="true">↳</span>
+                <span>
+                  <strong>{point.label}.</strong> {point.text}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+        <div class="actions">
+          <Button href="/devis" variant="dark" arrow="arrow-up-right">Préparer une demande</Button>
+        </div>
+      </div>
+
+      <div class="media-stack" data-reveal>
+        <div class="media-stack__main" data-parallax>
+          <Figure
+            name={page.intro.mainImage}
+            alt={page.intro.mainAlt}
+            sizes="(max-width: 900px) 82vw, 40vw"
+          />
+        </div>
+        <div class="media-stack__inset">
+          <Figure
+            name={page.intro.insetImage}
+            alt={page.intro.insetAlt}
+            sizes="(max-width: 900px) 46vw, 22vw"
+          />
+        </div>
+        <span class="media-stack__label">
+          <strong>{page.intro.stampLabel}</strong>
+          {page.intro.stampTitle}
+        </span>
+        <p class="media-stack__caption">{page.intro.caption}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft">
+    <div class="shell">
+      <SectionHead
+        index={`${division.number} / A`}
+        label={page.offers.label}
+        title={page.offers.title}
+        intro={page.offers.intro}
+      />
+
+      <div class="offer-grid" data-reveal-group>
+        {
+          page.offers.items.map((offer, index) => (
+            <article class="offer-card">
+              <span class="offer-card__num">{String(index + 1).padStart(2, '0')}</span>
+              <h3>{offer.title}</h3>
+              <p>{offer.text}</p>
+              <div class="offer-card__tags">
+                {offer.tags.map((tag) => (
+                  <span class="tag">{tag}</span>
+                ))}
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="shell field-note">
+      <figure class="field-note__media" data-reveal>
+        <Figure
+          name={page.field.image}
+          alt={page.field.imageAlt}
+          sizes="(max-width: 900px) 100vw, 48vw"
+        />
+        <figcaption>{page.field.caption}</figcaption>
+      </figure>
+
+      <div class="field-note__body" data-reveal>
+        <p class="eyebrow">{page.field.label}</p>
+        <h2 set:html={page.field.title} />
+        {page.field.body.map((paragraph) => <p>{paragraph}</p>)}
+        <ul class="field-note__points">
+          {
+            page.field.points.map((point) => (
+              <li>
+                <Icon name="check" size={15} strokeWidth={1.8} />
+                <span>{point}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <a class="link-arrow" href="/le-juste-prix">
+          Lire nos engagements
+          <Icon name="arrow-right" size={14} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--night process-section on-dark">
+    <div class="shell">
+      <SectionHead
+        index={`${division.number} / B`}
+        label="La méthode"
+        title={page.process.title}
+        intro={page.process.intro}
+      />
+      <ProcessSteps steps={page.process.steps} />
+      <div class="division-process__footer">
+        <p class="process-aside__quote">« {page.quote} »</p>
+        <a class="link-arrow link-arrow--light" href="/contact">
+          Poser une question
+          <Icon name="arrow-right" size={14} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft">
+    <div class="shell faq-split">
+      <div class="faq-split__aside" data-reveal>
+        <p class="eyebrow">Questions fréquentes</p>
+        <h2>Ce que l'on nous demande <em>le plus souvent.</em></h2>
+        <p>
+          Une réponse courte ne remplace pas un échange sur votre dossier. Si votre cas n'est pas ici,
+          écrivez-nous : nous répondrons avec les détails qui comptent.
+        </p>
+        <div class="actions">
+          <Button href="/contact" variant="dark" arrow="arrow-up-right">Nous écrire</Button>
+        </div>
+      </div>
+      <Faq items={page.faqs} />
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="shell">
+      <SectionHead
+        index="Ailleurs"
+        label="Autres métiers"
+        title="La maison ne s'arrête pas <em>à une porte.</em>"
+        intro="Nos divisions travaillent ensemble. Une commande peut commencer au comptoir, passer par la route et finir sur un chantier."
+      />
+
+      <div class="related-grid" data-reveal-group>
+        {
+          related.map((item) => (
+            <a class="related-card" href={`/${item.slug}`}>
+              <span class="related-card__num">{item.number} · {item.kicker}</span>
+              <h3>{item.name}</h3>
+              <p>{item.summary}</p>
+              <Icon name="arrow-up-right" size={16} />
+            </a>
+          ))
+        }
+      </div>
+
+      <div class="division-next">
+        <a class="link-arrow" href={nextHref}>
+          {nextLabel}
+          <Icon name="arrow-right" size={14} />
+        </a>
+        <a class="link-arrow" href="/activites">
+          Voir les six métiers
+          <Icon name="arrow-right" size={14} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <CTABand
+    variant="dawn"
+    eyebrow={`${division.name} · Devis`}
+    title="Dites-nous ce qu'il vous faut."
+    text="Un produit à trouver, une commande à livrer, un chantier à approvisionner. Écrivez-nous. Nous reviendrons avec des questions précises, puis une proposition claire."
+  />
+</BaseLayout>
+
+<style>
+  .field-note {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+    gap: clamp(2.5rem, 6vw, 6rem);
+    align-items: center;
+  }
+
+  .field-note__media {
+    margin: 0;
+    aspect-ratio: 4 / 4.6;
+    overflow: hidden;
+    background: var(--stone);
+  }
+
+  .field-note__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .field-note__media figcaption {
+    margin-top: 0.7rem;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: var(--ink-muted);
+  }
+
+  .field-note__body h2 {
+    max-width: 15ch;
+    font-size: clamp(2.2rem, 1.4rem + 2.6vw, 4.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+
+  .field-note__body h2 :global(em) {
+    color: var(--gold-deep);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .field-note__body > p {
+    max-width: 54ch;
+    margin-top: 1.2rem;
+    color: var(--ink-muted);
+    line-height: 1.72;
+  }
+
+  .field-note__points {
+    display: grid;
+    gap: 0;
+    margin-top: 1.8rem;
+    border-top: 1px solid var(--hair-dark);
+  }
+
+  .field-note__points li {
+    display: grid;
+    grid-template-columns: 1.3rem minmax(0, 1fr);
+    gap: 0.6rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--hair-dark);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--ink-muted);
+  }
+
+  .field-note__points li :global(svg) {
+    margin-top: 0.18rem;
+    color: var(--gold-deep);
+  }
+
+  .field-note__body .link-arrow {
+    margin-top: 1.6rem;
+  }
+
+  .division-process__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .division-process__footer .process-aside__quote {
+    max-width: 34ch;
+  }
+
+  .division-next {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--hair-dark);
+  }
+
+  @media (max-width: 900px) {
+    .field-note {
+      grid-template-columns: 1fr;
+    }
+
+    .field-note__media {
+      aspect-ratio: 16 / 11;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .field-note__media {
+      aspect-ratio: 4 / 3;
+    }
+
+    .division-process__footer {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

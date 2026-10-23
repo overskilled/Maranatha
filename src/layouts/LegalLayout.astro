@@ -1,0 +1,111 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { site } from '../data/site';
+
+interface Section {
+  id: string;
+  title: string;
+  html: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  lede: string;
+  updated?: string;
+  sections: Section[];
+}
+
+const { title, description, lede, updated = 'Octobre 2026', sections } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="legal-hero">
+    <div class="legal-hero__stars" aria-hidden="true"></div>
+    <div class="shell">
+      <nav class="legal-hero__crumb" aria-label="Fil d'Ariane">
+        <a href="/">Accueil</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{title}</span>
+      </nav>
+      <h1>{title}</h1>
+      <p>{lede}</p>
+    </div>
+  </section>
+
+  <section class="legal-body shell">
+    <aside class="legal-toc" aria-label="Sommaire">
+      <span class="label">Sommaire</span>
+      <ol>
+        {
+          sections.map((section: Section) => (
+            <li><a href={`#${section.id}`}>{section.title}</a></li>
+          ))
+        }
+      </ol>
+      <p class="legal-toc__updated">Dernière mise à jour : {updated}</p>
+    </aside>
+
+    <article class="legal-content prose">
+      {
+        sections.map((section: Section) => (
+          <>
+            <h2 id={section.id}>{section.title}</h2>
+            <Fragment set:html={section.html} />
+          </>
+        ))
+      }
+
+      <hr />
+      <p>
+        Une question sur ce document ? Écrivez à
+        <a href={site.emailHref}>{site.email}</a> ou appelez le <a href={site.phoneHref}>{site.phoneDisplay}</a>.
+      </p>
+    </article>
+  </section>
+</BaseLayout>
+
+<style>
+  .legal-hero {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .legal-hero__stars {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(246, 240, 226, 0.3) 0.7px, transparent 0.7px);
+    background-size: 38px 38px;
+    opacity: 0.18;
+    pointer-events: none;
+  }
+
+  .legal-hero .shell {
+    position: relative;
+    z-index: 1;
+  }
+
+  .legal-toc__updated {
+    margin-top: 1.5rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--hair-dark);
+    font-size: 0.7rem;
+    line-height: 1.45;
+    color: var(--ink-muted);
+  }
+
+  .legal-content hr {
+    margin-block: 2.5em;
+    border: 0;
+    border-top: 1px solid var(--hair-dark);
+  }
+
+  :global(.legal-content.prose > p:first-of-type::first-letter) {
+    float: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+</style>

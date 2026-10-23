@@ -1,0 +1,71 @@
+---
+interface Props {
+  class?: string;
+  label?: string;
+}
+
+const { class: className, label = 'Sceau Maranatha Le Juste Prix' } = Astro.props;
+---
+
+<svg
+  class:list={['seal', className]}
+  viewBox="0 0 120 120"
+  role="img"
+  aria-label={label}
+>
+  <circle cx="60" cy="60" r="58.2" fill="none" stroke="currentColor" stroke-width="1.3"></circle>
+  <circle cx="60" cy="60" r="51.6" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.6"></circle>
+
+  <text
+    x="60"
+    y="24.5"
+    text-anchor="middle"
+    font-size="7.4"
+    font-weight="700"
+    letter-spacing="1.25"
+    fill="currentColor">MARANATHA</text
+  >
+
+  <g transform="translate(21.5 30.85) scale(0.55)">
+    <path
+      d="M70 20V86M18 44H122"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="5.4"
+      stroke-linecap="square"></path>
+    <path
+      d="M18 44L8 68M18 44L28 68M122 44L112 68M122 44L132 68"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.2"
+      opacity="0.72"></path>
+    <path
+      d="M4 68Q18 83 32 68M108 68Q122 83 136 68"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="4.6"
+      stroke-linecap="round"></path>
+    <path d="M70 35L78 44L70 53L62 44Z" fill="currentColor"></path>
+  </g>
+
+  <text
+    x="60"
+    y="101.5"
+    text-anchor="middle"
+    font-size="7"
+    font-weight="700"
+    letter-spacing="1.15"
+    fill="currentColor">LE JUSTE PRIX</text
+  >
+</svg>
+
+<style>
+  .seal {
+    display: block;
+    width: 100%;
+    height: auto;
+    color: var(--gold);
+    font-family: var(--font-text);
+    overflow: visible;
+  }
+</style>

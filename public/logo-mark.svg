@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Maranatha Le Juste Prix">
+  <g transform="translate(16 46) scale(0.93)">
+    <path d="M70 20V86M18 44H122" fill="none" stroke="#0B1526" stroke-width="6.5" stroke-linecap="square"/>
+    <path d="M18 44L8 68M18 44L28 68M122 44L112 68M122 44L132 68" fill="none" stroke="#8A6624" stroke-width="2.2"/>
+    <path d="M4 68Q18 83 32 68M108 68Q122 83 136 68" fill="none" stroke="#8A6624" stroke-width="4.6" stroke-linecap="round"/>
+    <path d="M70 35L78 44L70 53L62 44Z" fill="#8A6624"/>
+  </g>
+</svg>

@@ -1,0 +1,137 @@
+---
+interface Step {
+  number: string;
+  title: string;
+  text: string;
+}
+
+interface Props {
+  steps: Step[];
+  class?: string;
+}
+
+const { steps, class: className } = Astro.props;
+---
+
+<ol class:list={['process', className]} data-reveal-group>
+  {
+    steps.map((step) => (
+      <li class="process__step">
+        <span class="process__num">{step.number}</span>
+        <h3>{step.title}</h3>
+        <p>{step.text}</p>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .process {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-top: 1px solid var(--hair-dark);
+  }
+
+  :global(.on-dark) .process,
+  :global(.section--night) .process,
+  :global(.section--night-deep) .process {
+    border-color: var(--hair-light);
+  }
+
+  .process__step {
+    position: relative;
+    padding: clamp(1.2rem, 2.5vw, 2rem) clamp(1rem, 2vw, 1.6rem) 1.2rem 0;
+    border-bottom: 1px solid var(--hair-dark);
+  }
+
+  :global(.on-dark) .process__step,
+  :global(.section--night) .process__step,
+  :global(.section--night-deep) .process__step {
+    border-color: var(--hair-light);
+  }
+
+  .process__step + .process__step {
+    padding-left: clamp(1rem, 2.5vw, 2rem);
+    border-left: 1px solid var(--hair-dark);
+  }
+
+  :global(.on-dark) .process__step + .process__step,
+  :global(.section--night) .process__step + .process__step,
+  :global(.section--night-deep) .process__step + .process__step {
+    border-color: var(--hair-light);
+  }
+
+  .process__num {
+    display: block;
+    margin-bottom: 1.6rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--gold-deep);
+  }
+
+  :global(.on-dark) .process__num,
+  :global(.section--night) .process__num,
+  :global(.section--night-deep) .process__num {
+    color: var(--gold);
+  }
+
+  .process h3 {
+    font-size: clamp(1.45rem, 1.2rem + 0.7vw, 1.9rem);
+    line-height: 1.05;
+    max-width: 12ch;
+  }
+
+  .process p {
+    margin-top: 0.8rem;
+    max-width: 30ch;
+    font-size: 0.92rem;
+    line-height: 1.62;
+    color: var(--ink-muted);
+  }
+
+  :global(.on-dark) .process p,
+  :global(.section--night) .process p,
+  :global(.section--night-deep) .process p {
+    color: var(--ivory-muted);
+  }
+
+  @media (max-width: 900px) {
+    .process {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .process__step:nth-child(3) {
+      border-left: 0;
+      padding-left: 0;
+    }
+
+    .process__step:nth-child(odd) {
+      padding-left: 0;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .process {
+      grid-template-columns: 1fr;
+    }
+
+    .process__step,
+    .process__step + .process__step {
+      border-left: 0;
+      padding-left: 0;
+    }
+
+    .process__num {
+      margin-bottom: 0.7rem;
+    }
+
+    .process h3 {
+      font-size: 1.55rem;
+    }
+
+    .process p {
+      max-width: 42ch;
+    }
+  }
+</style>

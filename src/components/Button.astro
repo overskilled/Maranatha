@@ -1,0 +1,53 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  href?: string;
+  variant?: 'gold' | 'outline' | 'dark' | 'ivory';
+  size?: 'default' | 'sm';
+  type?: 'button' | 'submit';
+  arrow?: 'arrow-right' | 'arrow-up-right' | 'whatsapp' | 'phone' | 'mail' | false;
+  external?: boolean;
+  class?: string;
+  ariaLabel?: string;
+  id?: string;
+}
+
+const {
+  href,
+  variant = 'gold',
+  size = 'default',
+  type = 'button',
+  arrow = 'arrow-right',
+  external = false,
+  class: className,
+  ariaLabel,
+  id,
+} = Astro.props;
+
+const variantClass =
+  variant === 'gold' ? '' : variant === 'outline' ? 'btn--outline' : variant === 'dark' ? 'btn--dark' : 'btn--ivory';
+const sizeClass = size === 'sm' ? 'btn--sm' : '';
+const classes = ['btn', variantClass, sizeClass, className].filter(Boolean).join(' ');
+---
+
+{
+  href ? (
+    <a
+      href={href}
+      class={classes}
+      aria-label={ariaLabel}
+      id={id}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noopener noreferrer' : undefined}
+    >
+      <span><slot /></span>
+      {arrow && <Icon name={arrow} size={15} strokeWidth={1.6} />}
+    </a>
+  ) : (
+    <button type={type} class={classes} aria-label={ariaLabel} id={id}>
+      <span><slot /></span>
+      {arrow && <Icon name={arrow} size={15} strokeWidth={1.6} />}
+    </button>
+  )
+}

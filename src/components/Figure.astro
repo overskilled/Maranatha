@@ -1,0 +1,54 @@
+---
+import meta from '../data/image-meta.json';
+
+type ImageMeta = { width: number; height: number; widths: number[] };
+
+interface Props {
+  name: string;
+  alt: string;
+  sizes?: string;
+  class?: string;
+  imgClass?: string;
+  loading?: 'eager' | 'lazy';
+  fetchpriority?: 'high' | 'low' | 'auto';
+  position?: string;
+  width?: number;
+  height?: number;
+}
+
+const {
+  name,
+  alt,
+  sizes = '(max-width: 720px) 100vw, 50vw',
+  class: className,
+  imgClass,
+  loading = 'lazy',
+  fetchpriority = 'auto',
+  position = '50% 50%',
+  width,
+  height,
+} = Astro.props;
+
+const info = (meta as Record<string, ImageMeta>)[name];
+if (!info) {
+  throw new Error(`Unknown image: ${name}`);
+}
+const largest = info.widths[info.widths.length - 1];
+const src = `/images/${name}-${largest}.webp`;
+const srcset = info.widths.map((w) => `/images/${name}-${w}.webp ${w}w`).join(', ');
+---
+
+<img
+  src={src}
+  srcset={srcset}
+  sizes={sizes}
+  width={width ?? info.width}
+  height={height ?? info.height}
+  alt={alt}
+  loading={loading}
+  decoding={loading === 'eager' ? 'sync' : 'async'}
+  fetchpriority={fetchpriority}
+  class:list={[className, imgClass]}
+  style={`object-position:${position}`}
+  data-image={name}
+/>

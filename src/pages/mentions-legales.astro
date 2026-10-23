@@ -1,0 +1,110 @@
+---
+import LegalLayout from '../layouts/LegalLayout.astro';
+import { site } from '../data/site';
+
+const sections = [
+  {
+    id: 'editeur',
+    title: 'Éditeur du site',
+    html: `
+      <p>
+        Le site est édité par <strong>${site.legalName}</strong>, maison de commerce établie à
+        Bafoussam, Région de l'Ouest, Cameroun.
+      </p>
+      <ul>
+        <li>Nom commercial : ${site.name}</li>
+        <li>Adresse : ${site.address}</li>
+        <li>Téléphone : <a href="${site.phoneHref}">${site.phoneDisplay}</a></li>
+        <li>E-mail : <a href="${site.emailHref}">${site.email}</a></li>
+      </ul>
+      <p>
+        <strong>À compléter avant la mise en ligne :</strong> les références légales de l'entreprise
+        (immatriculation, identification fiscale) seront ajoutées après vérification. Elles ne sont
+        pas publiées à ce stade.
+      </p>
+    `,
+  },
+  {
+    id: 'publication',
+    title: 'Responsable de la publication',
+    html: `
+      <p>
+        La responsabilité éditoriale du site est assurée par la direction de ${site.legalName}.
+        Pour toute question relative au contenu, écrivez à
+        <a href="${site.emailHref}">${site.email}</a>.
+      </p>
+    `,
+  },
+  {
+    id: 'hebergement',
+    title: 'Hébergement',
+    html: `
+      <p>
+        <strong>À compléter avant la mise en ligne :</strong> le nom, l'adresse et les coordonnées de
+        l'hébergeur du site seront publiés ici dès que le prestataire définitif sera retenu.
+      </p>
+    `,
+  },
+  {
+    id: 'propriete',
+    title: 'Propriété intellectuelle',
+    html: `
+      <p>
+        Les textes, la charte graphique, les éléments de marque et les compositions du site sont
+        protégés. Toute reproduction ou adaptation destinée à un usage commercial doit faire l'objet
+        d'une autorisation écrite.
+      </p>
+      <p>
+        Les photographies utilisées sont créditées sur la page
+        <a href="/credits-photo">Crédits photo</a>. Les images provenant de Wikimedia Commons restent
+        soumises à leurs licences respectives ; les autres photographies sont utilisées conformément
+        à la licence Pexels.
+      </p>
+    `,
+  },
+  {
+    id: 'responsabilite',
+    title: 'Responsabilité',
+    html: `
+      <p>
+        Les informations présentées sur ce site ont un caractère général. Elles ne constituent pas
+        une offre contractuelle. Seul un devis accepté, ou une commande confirmée par écrit, engage
+        la maison sur un prix, une quantité et un délai.
+      </p>
+      <p>
+        Les liens vers des sites externes sont fournis pour faciliter la navigation. Nous ne
+        contrôlons pas leur contenu et ne pouvons pas être tenus responsables de leurs pratiques.
+      </p>
+    `,
+  },
+  {
+    id: 'donnees',
+    title: 'Données personnelles',
+    html: `
+      <p>
+        Les informations transmises via les formulaires servent uniquement à traiter votre demande.
+        Le détail des données collectées, des finalités et de vos droits figure dans la
+        <a href="/confidentialite">politique de confidentialité</a>.
+      </p>
+    `,
+  },
+  {
+    id: 'droit',
+    title: 'Droit applicable',
+    html: `
+      <p>
+        Le site et les relations qu'il permet sont soumis au droit camerounais. En cas de difficulté,
+        nous privilégions d'abord une solution amiable. À défaut, les juridictions compétentes de
+        Bafoussam pourront être saisies.
+      </p>
+    `,
+  },
+];
+---
+
+<LegalLayout
+  title="Mentions légales"
+  description="Mentions légales du site d'Ets Maranatha Le Juste Prix, Bafoussam, Cameroun."
+  lede="Informations relatives à l'éditeur, à l'hébergement, à la propriété intellectuelle et à la responsabilité."
+  sections={sections}
+/>

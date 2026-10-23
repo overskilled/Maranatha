@@ -1,0 +1,431 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import CTABand from '../components/CTABand.astro';
+import Figure from '../components/Figure.astro';
+import Seal from '../components/Seal.astro';
+import Button from '../components/Button.astro';
+import { site } from '../data/site';
+
+const values = [
+  {
+    number: '01',
+    title: 'La crainte de Dieu',
+    text: "Nous travaillons comme sous un regard qui voit aussi ce qui n'est pas écrit sur la facture. Cette conscience passe avant la vitesse et avant la marge.",
+  },
+  {
+    number: '02',
+    title: 'La parole tenue',
+    text: "Un délai annoncé, un prix confirmé, une qualité nommée : ce qui est dit engage. Quand nous ne pouvons pas tenir, nous le disons avant l'échéance.",
+  },
+  {
+    number: '03',
+    title: 'Le prix juste',
+    text: "Ni le plus bas à tout prix, ni le plus confortable pour nous. Le prix qui correspond au travail, à la marchandise et au risque réel.",
+  },
+  {
+    number: '04',
+    title: 'Le travail bien fait',
+    text: "Finir ce qui est commencé, vérifier ce qui est livré, répondre quand quelque chose ne va pas. La qualité se voit aussi dans ce qui reste après la vente.",
+  },
+];
+
+const chapters = [
+  {
+    number: 'I',
+    title: 'Un nom',
+    text: "Maranatha est une prière ancienne : « Viens, Seigneur ». Ce n'est pas un label religieux posé sur une vitrine. C'est un rappel que ce que nous faisons ne reste pas caché.",
+  },
+  {
+    number: 'II',
+    title: 'Une balance',
+    text: "Le Juste Prix vient de Proverbes 11:1 : la balance fausse est en horreur à l'Éternel, mais le poids juste lui est agréable. Une balance ne triche pas : elle montre le poids réel, même quand il dérange.",
+  },
+  {
+    number: 'III',
+    title: 'Un comptoir',
+    text: "Nous avons commencé par ce qui est concret : des produits, des clients, des commandes, des chemins pour livrer. La maison s'est construite au contact du quotidien, pas dans un slogan.",
+  },
+  {
+    number: 'IV',
+    title: 'Six métiers',
+    text: "Commerce, import-export, agriculture, transport, BTP et services sont devenus six portes d'une même maison. Ce qui les tient ensemble, c'est la même manière de compter, de promettre et de rendre compte.",
+  },
+];
+---
+
+<BaseLayout
+  title="La maison"
+  description="Ets Maranatha Le Juste Prix, une maison de Bafoussam au service du commerce, de l'import-export, de l'agriculture, du transport, du BTP et des services. Des prix justes, une parole tenue."
+>
+  <PageHero
+    index="02"
+    label="La maison"
+    title="Maranatha, <em>au grand jour.</em>"
+    lede="Une maison de Bafoussam, six métiers, une même manière de travailler. Nous croyons qu'un prix juste et une parole tenue valent mieux qu'une promesse brillante."
+    image="bafoussam-street"
+    imageAlt="Rue de Bafoussam bordée de collines"
+    imageCaption="Bafoussam, Région de l'Ouest, Cameroun."
+    imagePosition="50% 50%"
+    meta={[
+      { label: 'Origine', value: 'Bafoussam, Cameroun' },
+      { label: 'Métiers', value: 'Six divisions complémentaires' },
+      { label: 'Devise', value: 'Des prix justes. Une parole tenue.' },
+    ]}
+    primary={{ label: 'Nos engagements', href: '/le-juste-prix' }}
+    secondary={{ label: 'Nous écrire', href: '/contact' }}
+  />
+
+  <section class="page-section">
+    <div class="shell intro-split">
+      <div class="intro-copy" data-reveal>
+        <p class="eyebrow">Notre nom</p>
+        <h2>Maranatha n'est pas <em>un slogan.</em></h2>
+        <p class="lede">
+          « Maranatha » est un mot araméen que l'on traduit souvent par « Viens, Seigneur ».
+          Il traverse les siècles comme une prière courte, presque un souffle.
+        </p>
+        <p>
+          Nous l'avons choisi parce qu'il nous rappelle que le travail se fait sous un regard plus
+          grand que celui du client. Ce qui n'est pas vérifié, ce qui est caché dans un prix, ce qui
+          est promis sans être tenu : tout cela reste devant Dieu.
+        </p>
+        <p>
+          « Le Juste Prix » vient de la même source. Une balance juste ne favorise ni le vendeur ni
+          l'acheteur. Elle dit le poids réel. C'est une exigence difficile, et c'est celle que nous
+          voulons garder au centre de la maison.
+        </p>
+        <ul class="intro-points">
+          <li>
+            <span aria-hidden="true">↳</span>
+            <span><strong>Un nom reçu.</strong> Une prière, pas une formule de vente.</span>
+          </li>
+          <li>
+            <span aria-hidden="true">↳</span>
+            <span><strong>Une balance.</strong> Le prix réel, même lorsqu'il ne nous arrange pas.</span>
+          </li>
+          <li>
+            <span aria-hidden="true">↳</span>
+            <span><strong>Un comptoir.</strong> Des clients, des commandes et des jours ordinaires.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="media-stack" data-reveal>
+        <div class="media-stack__main" data-parallax>
+          <Figure
+            name="bafoussam-field"
+            alt="Champ en terrasses sur les collines de l’Ouest camerounais"
+            sizes="(max-width: 900px) 82vw, 40vw"
+          />
+        </div>
+        <div class="media-stack__inset">
+          <Figure
+            name="shopkeeper-counter"
+            alt="Commerçante derrière son étal de produits divers"
+            sizes="(max-width: 900px) 46vw, 22vw"
+          />
+        </div>
+        <span class="media-stack__label">
+          <strong>La maison</strong>
+          Bafoussam, Cameroun
+        </span>
+        <p class="media-stack__caption">La terre et le comptoir : deux visages du même travail.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section page-section--ivory-soft">
+    <div class="shell">
+      <SectionHead
+        index="03"
+        label="Ce qui nous tient"
+        title="Quatre convictions, <em>une seule maison.</em>"
+        intro="Elles ne sont pas des affiches. Elles décident de la manière dont nous répondons, facturons et livrons."
+      />
+
+      <div class="values-grid" data-reveal-group>
+        {
+          values.map((value) => (
+            <article class="value-card">
+              <span class="value-card__num">{value.number}</span>
+              <h3>{value.title}</h3>
+              <p>{value.text}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="shell house-story">
+      <div class="house-story__intro" data-reveal>
+        <p class="eyebrow">Notre récit</p>
+        <h2>Ce que nous avons <em>choisi de tenir.</em></h2>
+        <p>
+          Il n'y a pas de grande légende à raconter. Il y a un nom, une règle, un comptoir et des
+          métiers qui se sont ajoutés parce que les clients demandaient plus que ce que nous
+          vendions déjà.
+        </p>
+        <p>
+          Nous préférons cette histoire simple à une histoire embellie. Elle laisse de la place à
+          ce qui compte : le travail réel, les personnes qui le font et la confiance qui se
+          construit commande après commande.
+        </p>
+        <div class="house-story__seal" aria-hidden="true">
+          <Seal />
+        </div>
+      </div>
+
+      <ol class="house-story__list" data-reveal-group>
+        {
+          chapters.map((chapter) => (
+            <li class="house-chapter">
+              <span class="house-chapter__num">{chapter.number}</span>
+              <div>
+                <h3>{chapter.title}</h3>
+                <p>{chapter.text}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="page-section page-section--night on-dark house-practical">
+    <div class="shell">
+      <SectionHead
+        index="04"
+        label="En pratique"
+        title="Une maison que <em>l'on peut joindre.</em>"
+        intro="Nous n'avons pas de vitrine virtuelle à vendre. Voici comment nous joindre et à quoi vous attendre."
+      />
+
+      <div class="fact-strip">
+        <div class="fact-strip__item">
+          <span class="fact-strip__label">Siège</span>
+          <span class="fact-strip__value">{site.address}</span>
+        </div>
+        <div class="fact-strip__item">
+          <span class="fact-strip__label">Langues</span>
+          <span class="fact-strip__value">Français · Anglais</span>
+        </div>
+        <div class="fact-strip__item">
+          <span class="fact-strip__label">Horaires</span>
+          <span class="fact-strip__value">{site.hours}</span>
+        </div>
+        <div class="fact-strip__item">
+          <span class="fact-strip__label">Premier contact</span>
+          <span class="fact-strip__value">Téléphone · WhatsApp · E-mail</span>
+        </div>
+      </div>
+
+      <div class="house-practical__foot">
+        <p>
+          La localisation exacte et le point de rendez-vous sont confirmés avant votre passage.
+          Écrivez-nous ou appelez-nous : nous vous donnons le lieu et l'heure qui conviennent.
+        </p>
+        <div class="actions">
+          <Button href={site.phoneHref} variant="gold" arrow="phone">Appeler la maison</Button>
+          <Button href="/contact" variant="outline" arrow="arrow-up-right">Nous écrire</Button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-quote">
+    <div class="shell page-quote__inner">
+      <span class="page-quote__seal"><Seal /></span>
+      <figure>
+        <blockquote>
+          <p>La balance fausse est en horreur à l'Éternel, mais le poids juste lui est agréable.</p>
+        </blockquote>
+        <figcaption>Proverbes 11:1</figcaption>
+      </figure>
+      <span class="page-quote__seal page-quote__seal--end"><Seal /></span>
+    </div>
+  </section>
+
+  <CTABand
+    variant="dawn"
+    eyebrow="La maison est ouverte"
+    title="Venez avec une question."
+    text="Un produit à trouver, un transport à organiser, un chantier à préparer. Nous vous écouterons, nous poserons les bonnes questions, puis nous vous dirons ce que nous pouvons tenir."
+    primaryLabel="Nous contacter"
+    primaryHref="/contact"
+  />
+</BaseLayout>
+
+<style>
+  .values-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--hair-dark);
+    border-left: 1px solid var(--hair-dark);
+  }
+
+  .value-card {
+    position: relative;
+    padding: clamp(1.4rem, 3vw, 2.4rem);
+    border-right: 1px solid var(--hair-dark);
+    border-bottom: 1px solid var(--hair-dark);
+    transition: background-color 0.3s ease;
+  }
+
+  .value-card:hover {
+    background: var(--gold-wash);
+  }
+
+  .value-card__num {
+    display: block;
+    margin-bottom: 1.6rem;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--gold-deep);
+  }
+
+  .value-card h3 {
+    max-width: 14ch;
+    font-size: clamp(1.7rem, 1.3rem + 1vw, 2.4rem);
+    line-height: 1.04;
+  }
+
+  .value-card p {
+    max-width: 36ch;
+    margin-top: 0.8rem;
+    font-size: 0.94rem;
+    line-height: 1.64;
+    color: var(--ink-muted);
+  }
+
+  .house-story {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+    gap: clamp(2.5rem, 7vw, 7rem);
+    align-items: start;
+  }
+
+  .house-story__intro {
+    position: sticky;
+    top: 110px;
+  }
+
+  .house-story__intro h2 {
+    max-width: 13ch;
+    font-size: clamp(2.3rem, 1.4rem + 2.6vw, 4.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+
+  .house-story__intro h2 :global(em) {
+    color: var(--gold-deep);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .house-story__intro > p {
+    max-width: 44ch;
+    margin-top: 1.2rem;
+    font-size: 0.96rem;
+    line-height: 1.7;
+    color: var(--ink-muted);
+  }
+
+  .house-story__seal {
+    width: clamp(70px, 8vw, 104px);
+    margin-top: 2rem;
+    opacity: 0.85;
+  }
+
+  .house-story__list {
+    border-top: 1px solid var(--hair-dark);
+  }
+
+  .house-chapter {
+    display: grid;
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: clamp(1.3rem, 2.5vw, 2rem);
+    border-bottom: 1px solid var(--hair-dark);
+  }
+
+  .house-chapter__num {
+    padding-top: 0.2rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-style: italic;
+    color: var(--gold-deep);
+  }
+
+  .house-chapter h3 {
+    font-size: clamp(1.6rem, 1.3rem + 0.9vw, 2.15rem);
+    line-height: 1.05;
+  }
+
+  .house-chapter p {
+    max-width: 54ch;
+    margin-top: 0.7rem;
+    font-size: 0.95rem;
+    line-height: 1.68;
+    color: var(--ink-muted);
+  }
+
+  .house-practical__foot {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: end;
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  .house-practical__foot > p {
+    max-width: 54ch;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--ivory-muted);
+  }
+
+  .house-practical__foot .actions {
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 900px) {
+    .values-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .house-story {
+      grid-template-columns: 1fr;
+    }
+
+    .house-story__intro {
+      position: static;
+    }
+
+    .house-practical__foot {
+      grid-template-columns: 1fr;
+    }
+
+    .house-practical__foot .actions {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .value-card h3 {
+      font-size: 1.7rem;
+    }
+
+    .house-chapter {
+      grid-template-columns: 2rem minmax(0, 1fr);
+    }
+
+    .house-story__seal {
+      display: none;
+    }
+  }
+</style>
