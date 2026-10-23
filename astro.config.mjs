@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://maranatha-lejusteprix.cm',
+  site: 'https://maranatha-le-juste-prix.com/',
   output: 'static',
   build: {
     inlineStylesheets: 'auto',
