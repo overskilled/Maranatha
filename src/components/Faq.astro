@@ -13,7 +13,7 @@ const { items } = Astro.props;
 
 <div class="faq-list" data-reveal>
   {
-    items.map((item) => (
+    items.map((item: FaqItem) => (
       <details class="faq-item">
         <summary>{item.question}</summary>
         <div class="faq-item__body">{item.answer}</div>

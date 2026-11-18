@@ -17,3 +17,9 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Données d'exécution : base SQLite, photos produits, fichiers d'import.
+# Vivent dans un volume, jamais dans le dépôt.
+# La barre oblique initiale ancre le motif à la racine : sans elle,
+# « src/data » serait ignoré lui aussi.
+/data/

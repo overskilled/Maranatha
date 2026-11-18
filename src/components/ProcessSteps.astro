@@ -15,7 +15,7 @@ const { steps, class: className } = Astro.props;
 
 <ol class:list={['process', className]} data-reveal-group>
   {
-    steps.map((step) => (
+    steps.map((step: Step) => (
       <li class="process__step">
         <span class="process__num">{step.number}</span>
         <h3>{step.title}</h3>
