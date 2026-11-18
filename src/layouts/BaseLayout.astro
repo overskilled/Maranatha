@@ -12,6 +12,8 @@ interface Props {
   ogImage?: string;
   bodyClass?: string;
   titleSuffix?: boolean;
+  /** Pages à fond clair : l'en-tête doit être opaque dès le haut. */
+  solidHeader?: boolean;
 }
 
 const {
@@ -20,6 +22,7 @@ const {
   ogImage = '/og.jpg',
   bodyClass = '',
   titleSuffix = true,
+  solidHeader = false,
 } = Astro.props;
 
 const pageTitle = titleSuffix ? `${title} | ${site.name}` : title;
@@ -111,9 +114,11 @@ const schema = {
     <meta name="twitter:image" content={ogUrl} />
 
     <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+
+    <slot name="head" />
   </head>
   <body class={bodyClass}>
-    <Header />
+    <Header solid={solidHeader} />
     <main id="main">
       <slot />
     </main>

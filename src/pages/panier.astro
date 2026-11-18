@@ -1,0 +1,192 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import Button from '../components/Button.astro';
+import '../styles/shop.css';
+import { readCart, cartDetails } from '../lib/cart';
+import { getSettings } from '../lib/settings';
+import { formatShort } from '../lib/money';
+import { imageUrl } from '../lib/images';
+import { site } from '../data/site';
+import { plural } from '../lib/text';
+
+const cart = await cartDetails(readCart(Astro.cookies));
+const config = getSettings();
+
+const belowMinimum = config.minimumOrder > 0 && cart.subtotal < config.minimumOrder;
+const canCheckout = config.open && cart.items.length > 0 && !cart.hasProblems && !belowMinimum;
+---
+
+<BaseLayout title="Votre panier" description="Les articles que vous avez choisis chez Maranatha Le Juste Prix."
+  solidHeader
+>
+  <section class="section section--ivory shop-top">
+    <div class="shell">
+      <p class="eyebrow"><span>Votre commande</span></p>
+      <h1 class="display" style="margin:0.5rem 0 2rem" data-reveal>Le panier</h1>
+
+      {
+        cart.dropped > 0 && (
+          <div class="flash flash--info">
+            <Icon name="info" size={15} />
+            <p>
+              {cart.dropped === 1
+                ? 'Un article a été retiré du panier : il n’est plus disponible à la vente.'
+                : `${cart.dropped} articles ont été retirés du panier : ils ne sont plus disponibles à la vente.`}
+            </p>
+          </div>
+        )
+      }
+
+      {
+        !config.open && (
+          <div class="flash flash--info">
+            <Icon name="info" size={15} />
+            <p>{config.closedMessage}</p>
+          </div>
+        )
+      }
+
+      {
+        cart.items.length === 0 ? (
+          <div class="shop-empty">
+            <h2>Votre panier est vide</h2>
+            <p>
+              Parcourez le catalogue : les prix y sont fermes, et ce que vous voyez
+              est ce que vous paierez.
+            </p>
+            <div class="actions" style="justify-content:center">
+              <Button href="/boutique">Voir la boutique</Button>
+              <Button href="/devis" variant="outline">Demander un devis</Button>
+            </div>
+          </div>
+        ) : (
+          <div class="cart" data-cart>
+            <div>
+              {cart.items.map((item) => (
+                <div class="cart-line" data-line={item.id}>
+                  <a class="cart-line__frame" href={`/boutique/${item.slug}`}>
+                    {item.image ? (
+                      <img
+                        src={imageUrl(item.image.filename, item.image.widths[0])}
+                        alt={item.name}
+                        width="88"
+                        height="88"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span />
+                    )}
+                  </a>
+
+                  <div style="min-width:0">
+                    <h2 class="cart-line__name">
+                      <a href={`/boutique/${item.slug}`}>{item.name}</a>
+                    </h2>
+                    <p class="cart-line__meta">
+                      {formatShort(item.price)} / {item.unit} · réf. {item.sku}
+                    </p>
+
+                    <div class="qty" style="display:inline-flex">
+                      <button type="button" data-step="-1" aria-label={`Diminuer la quantité de ${item.name}`}>
+                        −
+                      </button>
+                      <input
+                        type="text"
+                        inputmode="numeric"
+                        value={String(item.quantity)}
+                        data-qty
+                        data-min={item.minQuantity}
+                        data-max={item.available ?? 9999}
+                        aria-label={`Quantité de ${item.name}`}
+                      />
+                      <button type="button" data-step="1" aria-label={`Augmenter la quantité de ${item.name}`}>
+                        +
+                      </button>
+                    </div>
+
+                    {item.problem && <p class="cart-line__problem">{item.problem}</p>}
+                  </div>
+
+                  <div class="cart-line__right">
+                    <span class="cart-line__total" data-line-total>{formatShort(item.lineTotal)}</span>
+                    <button class="cart-line__drop" type="button" data-drop>Retirer</button>
+                  </div>
+                </div>
+              ))}
+
+              <div style="margin-top:1.5rem">
+                <a class="link-arrow" href="/boutique">
+                  <Icon name="arrow-right" size={14} />
+                  Continuer mes achats
+                </a>
+              </div>
+            </div>
+
+            <aside class="summary">
+              <h2>Récapitulatif</h2>
+
+              <dl class="summary__lines">
+                <dt>{plural(cart.count, 'article')}</dt>
+                <dd data-subtotal>{formatShort(cart.subtotal)}</dd>
+
+                <dt>Livraison</dt>
+                <dd>calculée à l’étape suivante</dd>
+
+                <dt class="summary__total">Sous-total</dt>
+                <dd class="summary__total" data-subtotal>{formatShort(cart.subtotal)}</dd>
+              </dl>
+
+              {
+                belowMinimum && (
+                  <div class="flash flash--error" style="margin:0 0 1rem">
+                    <p>
+                      La commande minimum est de {formatShort(config.minimumOrder)}.
+                      Ajoutez {formatShort(config.minimumOrder - cart.subtotal)} pour
+                      pouvoir valider.
+                    </p>
+                  </div>
+                )
+              }
+
+              {
+                cart.hasProblems && (
+                  <div class="flash flash--error" style="margin:0 0 1rem">
+                    <p>Ajustez les quantités signalées ci-contre avant de continuer.</p>
+                  </div>
+                )
+              }
+
+              {
+                canCheckout ? (
+                  <Button href="/commande" class="btn--wide">Passer la commande</Button>
+                ) : (
+                  <span class="btn btn--wide" aria-disabled="true" style="opacity:0.45;pointer-events:none">
+                    Passer la commande
+                  </span>
+                )
+              }
+
+              <p class="summary__note">
+                Le prix affiché est le prix payé. La livraison, si elle s’applique,
+                vous est annoncée avant que vous ne validiez.
+              </p>
+
+              <p style="margin:1rem 0 0;font-size:var(--step--1);color:var(--ink-muted);line-height:1.5">
+                Une question ? <a href={site.whatsappHref} target="_blank" rel="noopener">
+                  Écrivez-nous sur WhatsApp
+                </a> ou appelez le {site.phoneDisplay}.
+              </p>
+            </aside>
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <script>
+    import '../scripts/cart';
+  </script>
+</BaseLayout>

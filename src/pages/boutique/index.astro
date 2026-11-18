@@ -1,0 +1,258 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import Button from '../../components/Button.astro';
+import '../../styles/shop.css';
+import { listProducts, listCategories, type ProductFilters } from '../../lib/repo/products';
+import { getSettings } from '../../lib/settings';
+import { formatAmount } from '../../lib/money';
+import { imageUrl, imageSrcset } from '../../lib/images';
+import { site } from '../../data/site';
+import { plural } from '../../lib/text';
+
+const q = Astro.url.searchParams;
+const config = getSettings();
+
+const filters: ProductFilters = {
+  search: q.get('q') ?? '',
+  status: 'published',
+  categoryId: q.get('rayon') ?? undefined,
+  sort: (q.get('tri') as ProductFilters['sort']) ?? 'recent',
+  page: Number.parseInt(q.get('page') ?? '1', 10) || 1,
+  perPage: 24,
+};
+
+const [{ rows, total, page, pages }, categories] = await Promise.all([
+  listProducts(filters),
+  listCategories(),
+]);
+
+// On ne montre que les rayons qui ont quelque chose à vendre.
+const shown = categories.filter((c) => c.productCount > 0);
+
+function link(changes: Record<string, string | null>): string {
+  const next = new URLSearchParams(q);
+  for (const [key, value] of Object.entries(changes)) {
+    if (value === null || value === '') next.delete(key);
+    else next.set(key, value);
+  }
+  if (!('page' in changes)) next.delete('page');
+  const s = next.toString();
+  return `/boutique${s ? `?${s}` : ''}`;
+}
+
+const activeCategory = shown.find((c) => c.id === filters.categoryId);
+
+const title = activeCategory ? `${activeCategory.name} — Boutique` : 'Boutique';
+const description = activeCategory
+  ? `${activeCategory.name} chez ${site.name} à ${site.city}. ${config.shopIntro}`
+  : `Le catalogue de ${site.name} à ${site.city}. ${config.shopIntro}`;
+---
+
+<BaseLayout title={title} description={description}
+  solidHeader
+>
+  <section class="section section--ivory shop-top" style="padding-bottom:0">
+    <div class="shell">
+      <p class="eyebrow"><span>Le comptoir</span></p>
+      <h1 class="display" style="margin:0.5rem 0 0.75rem" data-reveal>
+        {activeCategory ? activeCategory.name : 'La boutique'}
+      </h1>
+      <p class="lede" style="max-width:52ch" data-reveal>
+        {activeCategory?.description ?? config.shopIntro}
+      </p>
+    </div>
+  </section>
+
+  {
+    !config.open && (
+      <div class="shell" style="margin-top:2rem">
+        <div class="flash flash--info">
+          <Icon name="info" size={15} />
+          <p>{config.closedMessage}</p>
+        </div>
+      </div>
+    )
+  }
+
+  <div class="shop-bar" style="margin-top:2.5rem">
+    <div class="shell">
+      <form class="shop-bar__inner" method="GET" role="search">
+        <div class="shop-search">
+          <Icon name="search" size={15} />
+          <input
+            type="search"
+            name="q"
+            value={filters.search}
+            placeholder="Chercher un article, une marque, une référence…"
+            aria-label="Chercher dans la boutique"
+          />
+        </div>
+
+        {filters.categoryId && <input type="hidden" name="rayon" value={filters.categoryId} />}
+
+        <select name="tri" aria-label="Trier" style="padding:0.6875rem 0.875rem;border:1px solid var(--hair-dark);background:#fff;font-family:var(--font-text);font-size:var(--step--1)">
+          <option value="recent" selected={filters.sort === 'recent'}>Les plus récents</option>
+          <option value="price" selected={filters.sort === 'price'}>Prix croissant</option>
+          <option value="price-desc" selected={filters.sort === 'price-desc'}>Prix décroissant</option>
+          <option value="name" selected={filters.sort === 'name'}>Nom (A→Z)</option>
+        </select>
+
+        <button class="btn btn--sm" type="submit">Chercher</button>
+
+        <span class="shop-bar__count">
+          {total === 0 ? 'aucun article' : plural(total, 'article')}
+        </span>
+      </form>
+    </div>
+  </div>
+
+  {
+    shown.length > 0 && (
+      <div class="shell">
+        <nav class="rayons" aria-label="Rayons">
+          <a class:list={['rayon', { 'is-active': !filters.categoryId }]} href={link({ rayon: null })}>
+            Tout
+          </a>
+          {shown.map((category) => (
+            <a
+              class:list={['rayon', { 'is-active': filters.categoryId === category.id }]}
+              href={link({ rayon: category.id })}
+            >
+              {category.name}
+              <span class="rayon__n">{category.productCount}</span>
+            </a>
+          ))}
+        </nav>
+      </div>
+    )
+  }
+
+  <section class="section" style="padding-top:clamp(1.5rem,3vw,2.5rem)">
+    <div class="shell">
+      {
+        rows.length === 0 ? (
+          <div class="shop-empty">
+            <h2>{filters.search ? 'Rien trouvé' : 'Le catalogue arrive'}</h2>
+            <p>
+              {filters.search
+                ? `Aucun article ne correspond à « ${filters.search} ». Essayez un autre mot, ou appelez-nous : nous trouvons souvent ce qui n’est pas encore en ligne.`
+                : 'Les articles seront bientôt en ligne. En attendant, dites-nous ce que vous cherchez, nous vous répondons avec un prix ferme.'}
+            </p>
+            <div class="actions" style="justify-content:center">
+              {filters.search && <Button href="/boutique" variant="outline">Voir tout le catalogue</Button>}
+              <Button href="/devis">Demander un devis</Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div class="goods">
+              {rows.map((product) => {
+                const out = product.trackStock && product.stock <= 0;
+                const low = product.trackStock && product.stock > 0 && product.stock <= product.lowStockThreshold;
+                return (
+                  <a class="good" href={`/boutique/${product.slug}`}>
+                    <div class="good__frame">
+                      {product.imageFilename ? (
+                        <img
+                          src={imageUrl(product.imageFilename, product.imageWidths?.[1] ?? product.imageWidths?.[0] ?? 400)}
+                          srcset={imageSrcset(product.imageFilename, product.imageWidths ?? [400])}
+                          sizes="(max-width: 640px) 50vw, 15rem"
+                          alt={product.name}
+                          loading="lazy"
+                          decoding="async"
+                          style={product.imagePlaceholder ? `background-image:url(${product.imagePlaceholder});background-size:cover` : ''}
+                        />
+                      ) : (
+                        <span class="good__empty">photo à venir</span>
+                      )}
+
+                      {out && <span class="good__flag good__flag--out">Épuisé</span>}
+                      {!out && product.featured && <span class="good__flag good__flag--gold">Sélection</span>}
+                      {!out && !product.featured && product.comparePrice && product.comparePrice > product.price && (
+                        <span class="good__flag">Prix baissé</span>
+                      )}
+                    </div>
+
+                    {product.categoryName && <p class="good__rayon">{product.categoryName}</p>}
+                    <h2 class="good__name">{product.name}</h2>
+
+                    <div class="good__price">
+                      <span class="good__amount">{formatAmount(product.price)}</span>
+                      <span class="good__unit">
+                        FCFA{product.unit !== 'pièce' ? ` / ${product.unit}` : ''}
+                      </span>
+                      {product.comparePrice && product.comparePrice > product.price && (
+                        <span class="good__was">{formatAmount(product.comparePrice)}</span>
+                      )}
+                    </div>
+
+                    {out ? (
+                      <p class="good__stock good__stock--out">Réapprovisionnement en cours</p>
+                    ) : low ? (
+                      <p class="good__stock">Plus que {product.stock} {product.unit}</p>
+                    ) : product.minQuantity > 1 ? (
+                      <p class="good__stock good__stock--out">
+                        Par {product.minQuantity} {product.unit} minimum
+                      </p>
+                    ) : null}
+                  </a>
+                );
+              })}
+            </div>
+
+            {pages > 1 && (
+              <nav class="shop-pager" aria-label="Pages">
+                <a
+                  class:list={['', { 'is-off': page <= 1 }]}
+                  href={link({ page: String(page - 1) })}
+                  aria-label="Page précédente"
+                >
+                  ←
+                </a>
+                {Array.from({ length: Math.min(pages, 7) }, (_, i) => {
+                  const start = Math.max(1, Math.min(page - 3, pages - 6));
+                  return pages <= 7 ? i + 1 : start + i;
+                }).map((n) =>
+                  n === page ? (
+                    <span class="is-active" aria-current="page">{n}</span>
+                  ) : (
+                    <a href={link({ page: String(n) })}>{n}</a>
+                  ),
+                )}
+                <a
+                  class:list={['', { 'is-off': page >= pages }]}
+                  href={link({ page: String(page + 1) })}
+                  aria-label="Page suivante"
+                >
+                  →
+                </a>
+              </nav>
+            )}
+          </>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="section section--night">
+    <div class="shell center">
+      <p class="eyebrow eyebrow--plain"><span>Notre règle</span></p>
+      <p class="display" style="max-width:20ch;margin:0.75rem auto 1rem">
+        Le prix affiché<br /><em>est le prix payé.</em>
+      </p>
+      <p class="lede muted-light" style="max-width:48ch;margin:0 auto 2rem">
+        Pas de frais ajoutés à la livraison, pas de surprise au comptoir.
+        La livraison, quand elle s’applique, est annoncée avant que vous ne validiez.
+      </p>
+      <div class="actions" style="justify-content:center">
+        <Button href="/le-juste-prix" variant="ivory">Notre engagement de prix</Button>
+        <Button href={site.whatsappHref} variant="outline" arrow="whatsapp" external>
+          Nous écrire sur WhatsApp
+        </Button>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

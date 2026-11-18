@@ -220,18 +220,22 @@ async function initMotion() {
   const heroReveals = allReveals.filter((el) => el.closest('.page-hero, .home-hero'));
   const scrollReveals = allReveals.filter((el) => !heroReveals.includes(el));
 
-  gsap.set(heroReveals, { opacity: 0, y: 22 });
-  gsap.to(heroReveals, {
-    opacity: 1,
-    y: 0,
-    duration: 0.95,
-    ease: 'power3.out',
-    stagger: 0.075,
-    delay: 0.12,
-    clearProps: 'transform',
-  });
+  // Une page sans élément à révéler est légitime : on n'appelle pas
+  // GSAP sur une liste vide, qui s'en plaindrait dans la console.
+  if (heroReveals.length) {
+    gsap.set(heroReveals, { opacity: 0, y: 22 });
+    gsap.to(heroReveals, {
+      opacity: 1,
+      y: 0,
+      duration: 0.95,
+      ease: 'power3.out',
+      stagger: 0.075,
+      delay: 0.12,
+      clearProps: 'transform',
+    });
+  }
 
-  gsap.set(scrollReveals, { opacity: 0, y: 24 });
+  if (scrollReveals.length) gsap.set(scrollReveals, { opacity: 0, y: 24 });
 
   scrollReveals.forEach((el) => {
     gsap.to(el, {
@@ -424,3 +428,36 @@ document.querySelectorAll<HTMLFormElement>('[data-mailto-form]').forEach((form) 
    ------------------------------------------------------------ */
 
 window.addEventListener('load', () => ScrollTrigger.refresh(), { once: true });
+
+/* ------------------------------------------------------------
+   Compteur du panier
+   Lu dans le cookie : juste même sur une page servie en cache.
+   ------------------------------------------------------------ */
+
+function cartCountFromCookie(): number {
+  const raw = document.cookie
+    .split('; ')
+    .find((part) => part.startsWith('maranatha_panier='))
+    ?.slice('maranatha_panier='.length);
+
+  if (!raw) return 0;
+
+  try {
+    const cart = JSON.parse(decodeURIComponent(decodeURIComponent(raw))) as {
+      lines?: { qty?: number }[];
+    };
+    return (cart.lines ?? []).reduce((sum, line) => sum + (Number(line.qty) || 0), 0);
+  } catch {
+    return 0;
+  }
+}
+
+function paintCartCount(): void {
+  const count = cartCountFromCookie();
+  for (const badge of document.querySelectorAll<HTMLElement>('[data-cart-count]')) {
+    badge.textContent = String(count);
+    badge.hidden = count === 0;
+  }
+}
+
+paintCartCount();

@@ -1,0 +1,138 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import Button from '../../components/Button.astro';
+import '../../styles/shop.css';
+import { getOrderByReference, STATUS_LABEL, PAYMENT_METHOD_LABEL } from '../../lib/repo/orders';
+import { getSettings } from '../../lib/settings';
+import { formatShort } from '../../lib/money';
+import { site } from '../../data/site';
+import { formatDateTime, formatPhone, firstNameOf } from '../../lib/text';
+
+const reference = Astro.url.searchParams.get('ref') ?? '';
+const paymentIssue = Astro.url.searchParams.get('paiement') === 'indisponible';
+
+const order = reference ? await getOrderByReference(reference) : null;
+const config = getSettings();
+
+if (!order) {
+  return Astro.redirect('/boutique', 302);
+}
+
+/* Message prêt à envoyer : beaucoup de clients préfèrent WhatsApp. */
+const lines = order.items
+  .map((item) => `• ${item.quantity} × ${item.name}`)
+  .join('\n');
+
+const whatsappText = encodeURIComponent(
+  `Bonjour, je viens de passer la commande ${order.reference} sur votre site.\n\n${lines}\n\nTotal : ${formatShort(order.total)}`,
+);
+---
+
+<BaseLayout
+  title={`Commande ${order.reference}`}
+  description="Votre commande est enregistrée."
+  solidHeader
+>
+  <section class="section section--ivory shop-top">
+    <div class="shell">
+      <div class="center" style="margin-bottom:clamp(2rem,4vw,3rem)">
+        <p class="eyebrow eyebrow--plain" style="justify-content:center">
+          <span>Commande enregistrée</span>
+        </p>
+        <h1 class="display" style="margin:0.75rem 0 0.75rem" data-reveal>
+          Merci, {firstNameOf(order.customerName)}.
+        </h1>
+        <p class="lede" style="max-width:46ch;margin:0 auto">
+          Nous avons bien reçu votre commande. Nous vous appelons au
+          {' '}<span class="nowrap">{formatPhone(order.customerPhone)}</span>
+          {' '}pour confirmer{order.deliveryMode === 'livraison' ? ' et convenir de la livraison' : ' et préparer le retrait'}.
+        </p>
+      </div>
+
+      {
+        paymentIssue && (
+          <div class="flash flash--info" style="max-width:38rem;margin:0 auto 1.5rem">
+            <Icon name="info" size={15} />
+            <p>
+              <strong>Le paiement mobile n’a pas pu s’ouvrir.</strong> Votre commande est
+              bien enregistrée : vous réglerez à la livraison, ou nous vous enverrons un
+              lien de paiement.
+            </p>
+          </div>
+        )
+      }
+
+      <div class="receipt-card">
+        <p class="receipt-card__ref">{order.reference}</p>
+        <p style="margin:0;font-size:var(--step--1);color:var(--ink-muted)">
+          {formatDateTime(order.createdAt)} · {STATUS_LABEL[order.status]}
+        </p>
+
+        <div class="receipt-card__lines">
+          {
+            order.items.map((item) => (
+              <div class="receipt-card__line">
+                <span>
+                  {item.quantity} × {item.name}
+                  <span style="display:block;color:var(--ink-muted)">
+                    {formatShort(item.unitPrice)} / {item.unit}
+                  </span>
+                </span>
+                <span>{formatShort(item.lineTotal)}</span>
+              </div>
+            ))
+          }
+
+          <div class="receipt-card__line">
+            <span>{order.deliveryMode === 'retrait' ? 'Retrait en boutique' : 'Livraison'}</span>
+            <span>{order.deliveryFee > 0 ? formatShort(order.deliveryFee) : 'offerte'}</span>
+          </div>
+
+          <div class="receipt-card__line receipt-card__total">
+            <span>À payer</span>
+            <span>{formatShort(order.total)}</span>
+          </div>
+        </div>
+
+        <dl class="detail__meta" style="margin:0;border-top:0;padding-top:0">
+          <dt>Paiement</dt>
+          <dd>{PAYMENT_METHOD_LABEL[order.paymentMethod] ?? order.paymentMethod}</dd>
+
+          <dt>{order.deliveryMode === 'retrait' ? 'Retrait' : 'Livraison'}</dt>
+          <dd>
+            {order.deliveryMode === 'retrait'
+              ? `${site.city}, ${site.hoursShort}`
+              : [order.address, order.quarter, order.city].filter(Boolean).join(', ')}
+          </dd>
+        </dl>
+
+        <p
+          style="margin:1.5rem 0 0;padding-top:1.25rem;border-top:1px solid var(--hair-dark);font-family:var(--font-display);font-style:italic;font-size:var(--step--1);color:var(--ink-muted);line-height:1.55"
+        >
+          Le montant ci-dessus est définitif. Rien ne s’y ajoutera au moment de la remise.
+        </p>
+      </div>
+
+      <div class="actions" style="justify-content:center;margin-top:2rem">
+        <Button
+          href={`https://wa.me/${config.whatsappNumber}?text=${whatsappText}`}
+          arrow="whatsapp"
+          external
+        >
+          Nous écrire sur WhatsApp
+        </Button>
+        <Button href="/boutique" variant="outline">Continuer mes achats</Button>
+      </div>
+
+      <p class="center" style="margin-top:2rem;font-size:var(--step--1);color:var(--ink-muted)">
+        Notez votre référence <strong>{order.reference}</strong> : elle nous permet de
+        retrouver votre commande immédiatement.
+        <br />
+        Une question ? Appelez le <a href={site.phoneHref}>{site.phoneDisplay}</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

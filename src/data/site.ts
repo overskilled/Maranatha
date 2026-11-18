@@ -34,6 +34,7 @@ export const site = {
 
 export const nav = [
   { label: 'Activités', href: '/activites', mega: true },
+  { label: 'Boutique', href: '/boutique' },
   { label: 'La maison', href: '/la-maison' },
   { label: 'Le juste prix', href: '/le-juste-prix' },
   { label: 'Carnet', href: '/carnet' },

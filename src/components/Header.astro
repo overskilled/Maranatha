@@ -5,6 +5,13 @@ import Icon from './Icon.astro';
 import Button from './Button.astro';
 import BrandLockup from './BrandLockup.astro';
 
+interface Props {
+  /** En-tête opaque dès le chargement, pour les pages à fond clair. */
+  solid?: boolean;
+}
+
+const { solid = false } = Astro.props;
+
 const path = Astro.url.pathname;
 const isActive = (href: string) =>
   href === '/' ? path === '/' : path === href || path.startsWith(`${href}/`);
@@ -14,7 +21,7 @@ const activitiesActive = isActive('/activites') || divisionActive;
 
 <a class="skip-link" href="#main">Aller au contenu</a>
 
-<header class="site-header" data-header>
+<header class:list={['site-header', { 'is-solid': solid }]} data-header>
   <div class="header__bar shell">
     <a class="brand" href="/" aria-label={`${site.name}, accueil`}>
       <BrandLockup />
@@ -52,6 +59,12 @@ const activitiesActive = isActive('/activites') || divisionActive;
       <a class="header__phone" href={site.phoneHref}>
         <Icon name="phone" size={14} strokeWidth={1.5} />
         <span>{site.phoneDisplay}</span>
+      </a>
+
+      <a class="cart-link" href="/panier" data-cart-link>
+        <Icon name="cart" size={16} strokeWidth={1.5} />
+        <span class="cart-link__label">Panier</span>
+        <span class="cart-link__n" data-cart-count hidden>0</span>
       </a>
       <Button href="/devis" size="sm" arrow="arrow-up-right" class="header__cta">Demander un devis</Button>
       <button
@@ -136,17 +149,20 @@ const activitiesActive = isActive('/activites') || divisionActive;
         <a href="/activites" class:list={{ 'is-active': activitiesActive }}>
           <span>01</span>Activités
         </a>
+        <a href="/boutique" class:list={{ 'is-active': isActive('/boutique') }}>
+          <span>02</span>Boutique
+        </a>
         <a href="/la-maison" class:list={{ 'is-active': isActive('/la-maison') }}>
-          <span>02</span>La maison
+          <span>03</span>La maison
         </a>
         <a href="/le-juste-prix" class:list={{ 'is-active': isActive('/le-juste-prix') }}>
-          <span>03</span>Le juste prix
+          <span>04</span>Le juste prix
         </a>
         <a href="/carnet" class:list={{ 'is-active': isActive('/carnet') }}>
-          <span>04</span>Carnet
+          <span>05</span>Carnet
         </a>
         <a href="/contact" class:list={{ 'is-active': isActive('/contact') }}>
-          <span>05</span>Contact
+          <span>06</span>Contact
         </a>
       </nav>
 
@@ -296,6 +312,44 @@ const activitiesActive = isActive('/activites') || divisionActive;
 
   .header__phone:hover {
     color: var(--gold);
+  }
+
+  /* Panier — même ton que le téléphone, l'en-tête est toujours clair sur fond sombre. */
+  .cart-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: rgba(246, 240, 226, 0.78);
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color 0.3s var(--ease-out);
+  }
+
+  .cart-link:hover {
+    color: var(--gold);
+  }
+
+  .cart-link__n {
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--gold);
+    color: var(--night);
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .cart-link__n[hidden] {
+    display: none;
   }
 
   .menu-toggle {
@@ -652,6 +706,10 @@ const activitiesActive = isActive('/activites') || divisionActive;
   @media (max-width: 1080px) {
     .nav,
     .header__cta {
+      display: none;
+    }
+
+    .cart-link__label {
       display: none;
     }
 

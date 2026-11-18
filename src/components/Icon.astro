@@ -14,7 +14,10 @@ interface Props {
     | 'clock'
     | 'check'
     | 'chevron-down'
-    | 'download';
+    | 'download'
+    | 'search'
+    | 'cart'
+    | 'info';
   size?: number;
   strokeWidth?: number;
   class?: string;
@@ -38,6 +41,9 @@ const strokePaths: Record<string, string> = {
   check: '<path d="m4.5 12.5 4.8 4.8L19.5 6.8"/>',
   'chevron-down': '<path d="m5.5 9 6.5 6.5L18.5 9"/>',
   download: '<path d="M12 3.5v12M7 10.5l5 5 5-5M4.5 20.5h15"/>',
+  search: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m15.8 15.8 4.4 4.4"/>',
+  cart: '<path d="M2.5 3.5h2.7l2.6 11.3h9.9l2.3-8.3H6.2"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17.5" cy="19.5" r="1.4"/>',
+  info: '<circle cx="12" cy="12" r="8.7"/><path d="M12 16.5v-5.2M12 8h.01"/>',
 };
 ---
 

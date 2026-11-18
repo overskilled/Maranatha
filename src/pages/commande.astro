@@ -1,0 +1,381 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import '../styles/shop.css';
+import { readCart, cartDetails, writeCart } from '../lib/cart';
+import { getSettings, deliveryFeeFor } from '../lib/settings';
+import { createOrder } from '../lib/repo/orders';
+import { availableMethods, isOnline, cinetpay } from '../lib/payments';
+import { formatShort } from '../lib/money';
+import { imageUrl } from '../lib/images';
+import { site } from '../data/site';
+import { normalizePhone, plural } from '../lib/text';
+import { env } from '../lib/env';
+
+const config = getSettings();
+const methods = availableMethods();
+
+let cart = await cartDetails(readCart(Astro.cookies));
+let error: string | null = null;
+let unavailable: { name: string; available: number }[] = [];
+
+/* Panier vide ou boutique fermée : on ne va pas plus loin. */
+if (cart.items.length === 0 && Astro.request.method !== 'POST') {
+  return Astro.redirect('/panier', 302);
+}
+
+/* Valeurs conservées si le formulaire revient avec une erreur. */
+let form = {
+  nom: '',
+  telephone: '',
+  email: '',
+  mode: 'livraison',
+  ville: config.zones[0]?.name ?? '',
+  quartier: '',
+  adresse: '',
+  note: '',
+  paiement: methods[0]?.key ?? 'livraison',
+};
+
+if (Astro.request.method === 'POST') {
+  const data = await Astro.request.formData();
+  const get = (key: string) => String(data.get(key) ?? '').trim();
+
+  form = {
+    nom: get('nom'),
+    telephone: get('telephone'),
+    email: get('email'),
+    mode: get('mode') === 'retrait' ? 'retrait' : 'livraison',
+    ville: get('ville'),
+    quartier: get('quartier'),
+    adresse: get('adresse'),
+    note: get('note'),
+    paiement: get('paiement'),
+  };
+
+  if (!config.open) {
+    error = config.closedMessage;
+  } else if (cart.items.length === 0) {
+    error = 'Votre panier est vide.';
+  } else if (cart.hasProblems) {
+    error = 'Certaines quantités ne sont plus disponibles. Revenez au panier pour les ajuster.';
+  } else if (!form.nom) {
+    error = 'Votre nom est obligatoire.';
+  } else if (!normalizePhone(form.telephone)) {
+    error = 'Ce numéro de téléphone n’est pas valide. Exemple : 6 75 20 12 51.';
+  } else if (form.mode === 'livraison' && !form.adresse) {
+    error = 'Indiquez où livrer la commande.';
+  } else if (!methods.some((m) => m.key === form.paiement)) {
+    error = 'Choisissez un moyen de paiement.';
+  } else if (config.minimumOrder > 0 && cart.subtotal < config.minimumOrder) {
+    error = `La commande minimum est de ${formatShort(config.minimumOrder)}.`;
+  } else {
+    const deliveryFee =
+      form.mode === 'retrait' ? 0 : deliveryFeeFor(form.ville, cart.subtotal);
+
+    const result = createOrder({
+      customerName: form.nom,
+      customerPhone: form.telephone,
+      customerEmail: form.email || null,
+      deliveryMode: form.mode as 'livraison' | 'retrait',
+      address: form.mode === 'livraison' ? form.adresse : null,
+      city: form.mode === 'livraison' ? form.ville : site.city,
+      quarter: form.quartier || null,
+      note: form.note || null,
+      paymentMethod: form.paiement,
+      channel: 'web',
+      deliveryFee,
+      lines: cart.items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+    });
+
+    if (!result.ok) {
+      error = result.error;
+      unavailable = result.unavailable ?? [];
+      cart = await cartDetails(readCart(Astro.cookies));
+    } else {
+      // La commande existe : le panier a fait son travail.
+      writeCart(Astro.cookies, { lines: [] });
+
+      // Paiement en ligne : on passe la main au prestataire.
+      if (isOnline(form.paiement)) {
+        const payment = await cinetpay.initiate({
+          reference: result.order.reference,
+          amount: result.order.total,
+          description: `Commande ${result.order.reference} — ${site.name}`,
+          customerName: result.order.customerName,
+          customerPhone: result.order.customerPhone,
+          returnUrl: `${env.publicUrl}/commande/merci?ref=${result.order.reference}`,
+          notifyUrl: `${env.publicUrl}/api/boutique/paiement`,
+        });
+
+        if (payment.ok) {
+          return Astro.redirect(payment.paymentUrl, 303);
+        }
+
+        // Le paiement n'a pas pu s'ouvrir : la commande reste valable,
+        // elle sera réglée à la livraison.
+        return Astro.redirect(
+          `/commande/merci?ref=${result.order.reference}&paiement=indisponible`,
+          303,
+        );
+      }
+
+      return Astro.redirect(`/commande/merci?ref=${result.order.reference}`, 303);
+    }
+  }
+}
+
+const deliveryFee =
+  form.mode === 'retrait' ? 0 : deliveryFeeFor(form.ville, cart.subtotal);
+const total = cart.subtotal + deliveryFee;
+
+const zonesPayload = JSON.stringify({
+  zones: config.zones,
+  fallback: config.defaultDeliveryFee,
+  freeFrom: config.freeDeliveryFrom,
+  subtotal: cart.subtotal,
+});
+---
+
+<BaseLayout title="Passer la commande" description="Validez votre commande chez Maranatha Le Juste Prix."
+  solidHeader
+>
+  <section class="section section--ivory shop-top">
+    <div class="shell">
+      <p class="eyebrow"><span>Dernière étape</span></p>
+      <h1 class="display" style="margin:0.5rem 0 2rem" data-reveal>Votre commande</h1>
+
+      {
+        error && (
+          <div class="flash flash--error" role="alert">
+            <Icon name="info" size={15} />
+            <div>
+              <p>{error}</p>
+              {unavailable.length > 0 && (
+                <p>
+                  {unavailable
+                    .map((u) =>
+                      u.available > 0
+                        ? `${u.name} : ${u.available} restants`
+                        : `${u.name} : épuisé`,
+                    )
+                    .join(' · ')}
+                </p>
+              )}
+              {(unavailable.length > 0 || cart.hasProblems) && (
+                <p><a href="/panier">Revenir au panier</a></p>
+              )}
+            </div>
+          </div>
+        )
+      }
+
+      <form method="POST" class="checkout" data-checkout data-zones={zonesPayload}>
+        <div>
+          <!-- Qui -->
+          <div class="form-block">
+            <h2 class="form-block__title">
+              <span class="form-block__n">01</span>
+              Qui êtes-vous ?
+            </h2>
+
+            <div class="form-row">
+              <div class="field">
+                <label class="field__label" for="nom">Nom complet <span aria-hidden="true">*</span></label>
+                <input id="nom" name="nom" type="text" value={form.nom} required autocomplete="name" />
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="telephone">Téléphone <span aria-hidden="true">*</span></label>
+                <input
+                  id="telephone"
+                  name="telephone"
+                  type="tel"
+                  value={form.telephone}
+                  required
+                  inputmode="tel"
+                  autocomplete="tel"
+                  placeholder="6 75 20 12 51"
+                />
+                <p class="form-note">C’est par là que nous vous joindrons pour la livraison.</p>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top:1rem">
+              <label class="field__label" for="email">Adresse e-mail <span style="color:var(--ink-muted)">(facultatif)</span></label>
+              <input id="email" name="email" type="email" value={form.email} autocomplete="email" />
+            </div>
+          </div>
+
+          <!-- Où -->
+          <div class="form-block">
+            <h2 class="form-block__title">
+              <span class="form-block__n">02</span>
+              Où la recevoir ?
+            </h2>
+
+            <div class="choices" style="margin-bottom:1.25rem">
+              <label class="choice">
+                <input type="radio" name="mode" value="livraison" checked={form.mode === 'livraison'} data-mode />
+                <span class="choice__body">
+                  <span class="choice__label">Livraison</span>
+                  <span class="choice__hint">
+                    Nous apportons la commande à l’adresse indiquée.
+                  </span>
+                </span>
+              </label>
+
+              <label class="choice">
+                <input type="radio" name="mode" value="retrait" checked={form.mode === 'retrait'} data-mode />
+                <span class="choice__body">
+                  <span class="choice__label">Retrait en boutique</span>
+                  <span class="choice__hint">
+                    À {site.city}, {site.hoursShort}. Rien à payer pour le transport.
+                  </span>
+                </span>
+                <span class="choice__price">gratuit</span>
+              </label>
+            </div>
+
+            <div data-delivery-fields hidden={form.mode === 'retrait'}>
+              <div class="form-row">
+                <div class="field">
+                  <label class="field__label" for="ville">Zone de livraison</label>
+                  <select id="ville" name="ville" data-city>
+                    {
+                      config.zones.map((zone) => (
+                        <option value={zone.name} selected={form.ville === zone.name}>
+                          {zone.name} — {formatShort(zone.fee)}
+                        </option>
+                      ))
+                    }
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="field__label" for="quartier">Quartier</label>
+                  <input id="quartier" name="quartier" type="text" value={form.quartier} />
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:1rem">
+                <label class="field__label" for="adresse">Adresse ou point de repère</label>
+                <textarea
+                  id="adresse"
+                  name="adresse"
+                  rows="2"
+                  placeholder="Rue, immeuble, ou le repère le plus proche."
+                  set:text={form.adresse}
+                />
+                <p class="form-note">Un repère connu vaut mieux qu’une adresse exacte.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment payer -->
+          <div class="form-block">
+            <h2 class="form-block__title">
+              <span class="form-block__n">03</span>
+              Comment payer ?
+            </h2>
+
+            <div class="choices">
+              {
+                methods.map((method) => (
+                  <label class="choice">
+                    <input
+                      type="radio"
+                      name="paiement"
+                      value={method.key}
+                      checked={form.paiement === method.key}
+                    />
+                    <span class="choice__body">
+                      <span class="choice__label">{method.label}</span>
+                      <span class="choice__hint">{method.hint}</span>
+                    </span>
+                  </label>
+                ))
+              }
+            </div>
+
+            <div class="field" style="margin-top:1.25rem">
+              <label class="field__label" for="note">Un mot pour nous <span style="color:var(--ink-muted)">(facultatif)</span></label>
+              <textarea
+                id="note"
+                name="note"
+                rows="2"
+                placeholder="Heure de passage souhaitée, précision sur la commande…"
+                set:text={form.note}
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Récapitulatif -->
+        <aside class="summary">
+          <h2>Votre commande</h2>
+
+          <div style="margin-bottom:1.25rem">
+            {
+              cart.items.map((item) => (
+                <div
+                  style="display:flex;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--hair-dark);align-items:center"
+                >
+                  {item.image && (
+                    <img
+                      src={imageUrl(item.image.filename, item.image.widths[0])}
+                      alt=""
+                      width="40"
+                      height="40"
+                      style="width:40px;height:40px;object-fit:cover;flex:none"
+                      loading="lazy"
+                    />
+                  )}
+                  <span style="flex:1;min-width:0;font-size:var(--step--1);line-height:1.4">
+                    {item.name}
+                    <span style="display:block;color:var(--ink-muted)">
+                      {item.quantity} × {formatShort(item.price)}
+                    </span>
+                  </span>
+                  <span style="font-variant-numeric:tabular-nums;font-size:var(--step--1);white-space:nowrap">
+                    {formatShort(item.lineTotal)}
+                  </span>
+                </div>
+              ))
+            }
+          </div>
+
+          <dl class="summary__lines">
+            <dt>{plural(cart.count, 'article')}</dt>
+            <dd>{formatShort(cart.subtotal)}</dd>
+
+            <dt>Livraison</dt>
+            <dd data-fee>{deliveryFee > 0 ? formatShort(deliveryFee) : 'offerte'}</dd>
+
+            <dt class="summary__total">À payer</dt>
+            <dd class="summary__total" data-total>{formatShort(total)}</dd>
+          </dl>
+
+          <button class="btn btn--wide" type="submit">
+            Valider la commande
+            <Icon name="arrow-right" size={15} />
+          </button>
+
+          <p class="summary__note">
+            Ce montant est définitif. Rien ne s’y ajoutera au moment de la remise.
+          </p>
+
+          <p style="margin:1rem 0 0;font-size:var(--step--1);color:var(--ink-muted);line-height:1.5">
+            <a href="/panier">Modifier le panier</a>
+          </p>
+        </aside>
+      </form>
+    </div>
+  </section>
+
+  <script>
+    import '../scripts/checkout';
+  </script>
+</BaseLayout>
