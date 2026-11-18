@@ -1,0 +1,233 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminIcon from '../../../components/admin/AdminIcon.astro';
+import {
+  listOrders, orderCounts, STATUS_LABEL, PAYMENT_LABEL, PAYMENT_METHOD_LABEL,
+  type OrderFilters,
+} from '../../../lib/repo/orders';
+import { formatShort, formatAmount } from '../../../lib/money';
+import { timeAgo, formatPhone, plural } from '../../../lib/text';
+
+const q = Astro.url.searchParams;
+
+const filters: OrderFilters = {
+  search: q.get('q') ?? '',
+  status: (q.get('statut') ?? 'ouvertes') as OrderFilters['status'],
+  paymentStatus: (q.get('paiement') ?? 'all') as OrderFilters['paymentStatus'],
+  channel: (q.get('canal') ?? 'all') as OrderFilters['channel'],
+  page: Number.parseInt(q.get('page') ?? '1', 10) || 1,
+  perPage: 40,
+};
+
+const [{ rows, total, page, pages }, counts] = await Promise.all([
+  listOrders(filters),
+  orderCounts(),
+]);
+
+function link(changes: Record<string, string | null>): string {
+  const next = new URLSearchParams(q);
+  for (const [key, value] of Object.entries(changes)) {
+    if (value === null || value === '') next.delete(key);
+    else next.set(key, value);
+  }
+  if (!('page' in changes)) next.delete('page');
+  const s = next.toString();
+  return `/admin/commandes${s ? `?${s}` : ''}`;
+}
+
+const tabs = [
+  { key: 'ouvertes', label: 'À traiter', count: counts.ouvertes },
+  { key: 'nouvelle', label: 'Nouvelles', count: counts.nouvelle },
+  { key: 'confirmee', label: 'Confirmées', count: counts.confirmee },
+  { key: 'preparee', label: 'Préparées', count: counts.preparee },
+  { key: 'expediee', label: 'En livraison', count: counts.expediee },
+  { key: 'livree', label: 'Livrées', count: counts.livree },
+  { key: 'annulee', label: 'Annulées', count: counts.annulee },
+  { key: 'all', label: 'Toutes', count: counts.total },
+];
+
+const exportQuery = new URLSearchParams();
+if (filters.search) exportQuery.set('q', filters.search);
+if (filters.status && filters.status !== 'all') exportQuery.set('statut', String(filters.status));
+---
+
+<AdminLayout
+  title="Commandes"
+  subtitle={total === 0 ? 'Aucune commande' : `${plural(total, 'commande')}`}
+  wide
+>
+  <a
+    class="btn btn--ghost btn--sm"
+    href={`/api/admin/commandes/export?${exportQuery.toString()}`}
+    slot="actions"
+    download
+  >
+    <AdminIcon name="download" size={14} />
+    Exporter
+  </a>
+
+  <section class="card">
+    <form class="filters" method="GET">
+      <div class="filters__search">
+        <AdminIcon name="search" size={15} />
+        <input
+          type="search"
+          name="q"
+          value={filters.search}
+          placeholder="Référence, nom, téléphone…"
+          aria-label="Rechercher une commande"
+        />
+      </div>
+
+      <select name="paiement" aria-label="Paiement" style="max-width:11rem">
+        <option value="">Tous les paiements</option>
+        <option value="en_attente" selected={filters.paymentStatus === 'en_attente'}>En attente</option>
+        <option value="paye" selected={filters.paymentStatus === 'paye'}>Payées</option>
+        <option value="echoue" selected={filters.paymentStatus === 'echoue'}>Échouées</option>
+        <option value="rembourse" selected={filters.paymentStatus === 'rembourse'}>Remboursées</option>
+      </select>
+
+      <select name="canal" aria-label="Canal" style="max-width:9.5rem">
+        <option value="">Tous les canaux</option>
+        <option value="web" selected={filters.channel === 'web'}>Site</option>
+        <option value="whatsapp" selected={filters.channel === 'whatsapp'}>WhatsApp</option>
+        <option value="boutique" selected={filters.channel === 'boutique'}>Boutique</option>
+        <option value="telephone" selected={filters.channel === 'telephone'}>Téléphone</option>
+      </select>
+
+      <input type="hidden" name="statut" value={String(filters.status)} />
+      <button class="btn btn--ghost btn--sm" type="submit">Filtrer</button>
+    </form>
+
+    <div class="filters" style="padding-top:0.625rem;padding-bottom:0.625rem">
+      <div class="chips">
+        {
+          tabs.map((tab) => (
+            <a
+              class:list={['chip', { 'is-active': filters.status === tab.key }]}
+              href={link({ statut: tab.key })}
+            >
+              {tab.label}
+              <span class="chip__n">{tab.count}</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+
+    {
+      rows.length === 0 ? (
+        <div class="empty">
+          <h3>Aucune commande ici</h3>
+          <p>
+            {filters.status === 'ouvertes'
+              ? 'Rien à traiter pour le moment. Les nouvelles commandes apparaîtront ici dès qu’un client valide son panier.'
+              : 'Aucune commande ne correspond à ce filtre.'}
+          </p>
+          {filters.status !== 'all' && (
+            <a class="btn btn--ghost" href={link({ statut: 'all' })}>Voir toutes les commandes</a>
+          )}
+        </div>
+      ) : (
+        <>
+          <div class="table-wrap">
+            <table class="data stackable">
+              <thead>
+                <tr>
+                  <th>Commande</th>
+                  <th>Client</th>
+                  <th>Livraison</th>
+                  <th class="num">Articles</th>
+                  <th class="num">Total</th>
+                  <th>Paiement</th>
+                  <th>État</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  rows.map((order) => (
+                    <tr
+                      style="cursor:pointer"
+                      onclick={`location.href='/admin/commandes/${order.id}'`}
+                    >
+                      <td class="cell-span">
+                        <span class="cell-main__name">
+                          <a href={`/admin/commandes/${order.id}`}>{order.reference}</a>
+                        </span>
+                        <span class="cell-main__meta">
+                          {timeAgo(order.createdAt)}
+                          {order.channel !== 'web' ? ` · ${order.channel}` : ''}
+                        </span>
+                      </td>
+
+                      <td data-label="Client">
+                        <span style="display:block">{order.customerName}</span>
+                        <span class="cell-main__meta">{formatPhone(order.customerPhone)}</span>
+                      </td>
+
+                      <td data-label="Livraison" style="font-size:0.8125rem;color:var(--a-ink-muted)">
+                        {order.deliveryMode === 'retrait' ? 'Retrait boutique' : (order.city || 'Livraison')}
+                        {order.quarter && order.deliveryMode === 'livraison' ? ` · ${order.quarter}` : ''}
+                      </td>
+
+                      <td class="num" data-label="Articles">{order.itemCount}</td>
+
+                      <td class="num money" data-label="Total" style="font-weight:600">
+                        {formatShort(order.total)}
+                      </td>
+
+                      <td data-label="Paiement">
+                        <span class:list={['tag', `tag--${order.paymentStatus}`]}>
+                          {PAYMENT_LABEL[order.paymentStatus]}
+                        </span>
+                        <span class="cell-main__meta" style="display:block">
+                          {PAYMENT_METHOD_LABEL[order.paymentMethod] ?? order.paymentMethod}
+                        </span>
+                      </td>
+
+                      <td data-label="État">
+                        <span class:list={['tag', `tag--${order.status}`]}>
+                          {STATUS_LABEL[order.status]}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+
+          {
+            pages > 1 && (
+              <div class="card__foot">
+                <span class="pager" style="flex:1">
+                  Page {page} sur {pages} · {formatAmount(total)} commandes
+                </span>
+                <div class="pager__links">
+                  <a
+                    class="pager__link"
+                    href={link({ page: String(page - 1) })}
+                    aria-disabled={page <= 1 ? 'true' : undefined}
+                    aria-label="Page précédente"
+                  >
+                    <AdminIcon name="chevron-left" size={14} />
+                  </a>
+                  <a
+                    class="pager__link"
+                    href={link({ page: String(page + 1) })}
+                    aria-disabled={page >= pages ? 'true' : undefined}
+                    aria-label="Page suivante"
+                  >
+                    <AdminIcon name="chevron-right" size={14} />
+                  </a>
+                </div>
+              </div>
+            )
+          }
+        </>
+      )
+    }
+  </section>
+</AdminLayout>

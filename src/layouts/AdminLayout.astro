@@ -1,0 +1,303 @@
+---
+/* Cadre commun du back-office : navigation, titre, messages. */
+
+import '../styles/admin.css';
+import AdminIcon from '../components/admin/AdminIcon.astro';
+import { site } from '../data/site';
+import { orderCounts } from '../lib/repo/orders';
+import { productCounts } from '../lib/repo/products';
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  /** Fil d'Ariane court, affiché avant le titre. */
+  back?: { href: string; label: string };
+  wide?: boolean;
+}
+
+const { title, subtitle, back, wide = false } = Astro.props;
+const user = Astro.locals.user;
+const path = Astro.url.pathname;
+
+const [orders, products] = await Promise.all([orderCounts(), productCounts()]);
+
+const isActive = (href: string, exact = false) =>
+  exact ? path === href : path === href || path.startsWith(`${href}/`);
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: string;
+  count: number;
+  /** Correspondance stricte, pour que « /admin » ne s'allume pas partout. */
+  exact?: boolean;
+  /** Compteur informatif plutôt qu'appel à l'action. */
+  quiet?: boolean;
+  /** Compteur qui mérite l'œil : des articles sans photo, par exemple. */
+  alert?: boolean;
+};
+
+type NavSection = { group: string | null; items: NavItem[] };
+
+const nav: NavSection[] = [
+  {
+    group: null,
+    items: [
+      { href: '/admin', label: 'Tableau de bord', icon: 'dashboard', exact: true, count: 0 },
+    ],
+  },
+  {
+    group: 'Catalogue',
+    items: [
+      { href: '/admin/produits', label: 'Articles', icon: 'box', count: products.total, quiet: true },
+      { href: '/admin/ajout-rapide', label: 'Saisie rapide', icon: 'zap', count: 0 },
+      { href: '/admin/import', label: 'Import en lot', icon: 'upload', count: 0 },
+      { href: '/admin/photos', label: 'Photos en lot', icon: 'image', count: products.noImage, alert: products.noImage > 0 },
+      { href: '/admin/categories', label: 'Rayons', icon: 'tag', count: 0 },
+    ],
+  },
+  {
+    group: 'Ventes',
+    items: [
+      { href: '/admin/commandes', label: 'Commandes', icon: 'cart', count: orders.ouvertes },
+      { href: '/admin/clients', label: 'Clients', icon: 'users', count: 0 },
+    ],
+  },
+  {
+    group: 'Maison',
+    items: [
+      { href: '/admin/reglages', label: 'Réglages', icon: 'settings', count: 0 },
+    ],
+  },
+];
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Back-office {site.shortName}</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0B1526" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href="/fonts/arimo-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/ibm-plex-serif-500-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      @font-face {
+        font-family: "Arimo";
+        src: url("/fonts/arimo-latin-var.woff2") format("woff2");
+        font-weight: 400 700;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Arimo";
+        src: url("/fonts/arimo-latin-ext-var.woff2") format("woff2");
+        font-weight: 400 700;
+        font-display: swap;
+        unicode-range: U+0100-02BA, U+1E00-1E9F, U+2000-206F, U+20A0-20CF;
+      }
+      @font-face {
+        font-family: "Arimo";
+        src: url("/fonts/arimo-italic-latin-var.woff2") format("woff2");
+        font-weight: 400 700;
+        font-style: italic;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Serif";
+        src: url("/fonts/ibm-plex-serif-500-latin.woff2") format("woff2");
+        font-weight: 500;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Serif";
+        src: url("/fonts/ibm-plex-serif-400-latin.woff2") format("woff2");
+        font-weight: 400;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Serif";
+        src: url("/fonts/ibm-plex-serif-400-italic-latin.woff2") format("woff2");
+        font-weight: 400;
+        font-style: italic;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Serif";
+        src: url("/fonts/ibm-plex-serif-600-latin.woff2") format("woff2");
+        font-weight: 600;
+        font-display: swap;
+      }
+    </style>
+  </head>
+
+  <body class="admin">
+    <a class="sr-only" href="#travail">Aller au contenu</a>
+
+    <div class="shell">
+      <aside class="side" data-side>
+        <a class="side__brand" href="/admin">
+          <img class="side__mark" src="/logo-mark-reversed.svg" alt="" width="30" height="30" />
+          <span class="side__name">
+            {site.shortName}
+            <em>Back-office</em>
+          </span>
+        </a>
+
+        <nav class="side__nav" aria-label="Navigation du back-office">
+          {
+            nav.map((section) => (
+              <>
+                {section.group && <p class="side__group">{section.group}</p>}
+                {section.items.map((item) => (
+                  <a
+                    class:list={['side__link', { 'is-active': isActive(item.href, item.exact) }]}
+                    href={item.href}
+                    aria-current={isActive(item.href, item.exact) ? 'page' : undefined}
+                  >
+                    <AdminIcon name={item.icon} size={16} />
+                    <span>{item.label}</span>
+                    {item.count > 0 && (
+                      <span
+                        class:list={[
+                          'side__count',
+                          { 'side__count--quiet': item.quiet && !item.alert },
+                        ]}
+                      >
+                        {item.count > 999 ? '999+' : item.count}
+                      </span>
+                    )}
+                  </a>
+                ))}
+              </>
+            ))
+          }
+        </nav>
+
+        <div class="side__foot">
+          <a class="side__out" href="/" target="_blank" rel="noopener">
+            <AdminIcon name="external" size={13} />
+            Voir la boutique
+          </a>
+          <div style="margin-top:0.75rem">
+            <span class="side__user">{user?.name}</span>
+            <span class="side__role">{user?.role === 'owner' ? 'Propriétaire' : 'Équipe'}</span>
+          </div>
+          <form method="POST" action="/api/admin/deconnexion">
+            <button class="side__out" type="submit">
+              <AdminIcon name="logout" size={13} />
+              Se déconnecter
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <button class="scrim" data-scrim aria-label="Fermer le menu"></button>
+
+      <div class="main">
+        <header class="topbar">
+          <button class="burger" data-burger aria-label="Ouvrir le menu" aria-expanded="false">
+            <AdminIcon name="menu" size={18} />
+          </button>
+
+          <div class="topbar__title">
+            {
+              back && (
+                <a
+                  href={back.href}
+                  style="display:inline-flex;align-items:center;gap:0.3125rem;font-size:0.8125rem;color:var(--a-ink-muted);text-decoration:none;margin-bottom:0.125rem"
+                >
+                  <AdminIcon name="arrow-left" size={13} />
+                  {back.label}
+                </a>
+              )
+            }
+            <h1>{title}</h1>
+            {subtitle && <p>{subtitle}</p>}
+          </div>
+
+          <div class="topbar__actions">
+            <slot name="actions" />
+          </div>
+        </header>
+
+        <main class="page" id="travail" style={wide ? 'max-width:none' : ''}>
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <div class="toasts" data-toasts aria-live="polite" aria-atomic="false"></div>
+
+    <script>
+      declare global {
+        interface Window {
+          /** Message volant, utilisable depuis n'importe quelle page. */
+          toast: (
+            message: string,
+            kind?: 'info' | 'success' | 'danger',
+            ms?: number,
+          ) => void;
+        }
+      }
+
+      /* Menu mobile */
+      const side = document.querySelector('[data-side]');
+      const scrim = document.querySelector('[data-scrim]');
+      const burger = document.querySelector('[data-burger]');
+
+      function closeMenu() {
+        side?.classList.remove('is-open');
+        scrim?.classList.remove('is-open');
+        burger?.setAttribute('aria-expanded', 'false');
+      }
+
+      burger?.addEventListener('click', () => {
+        const open = side?.classList.toggle('is-open');
+        scrim?.classList.toggle('is-open', open);
+        burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+
+      scrim?.addEventListener('click', closeMenu);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeMenu();
+      });
+
+      /* Messages volants, utilisables depuis n'importe quelle page */
+      const host = document.querySelector('[data-toasts]');
+
+      window.toast = function toast(
+        message: string,
+        kind: 'info' | 'success' | 'danger' = 'info',
+        ms = 4000,
+      ) {
+        if (!host) return;
+        const el = document.createElement('div');
+        el.className = `toast toast--${kind}`;
+        el.setAttribute('role', kind === 'danger' ? 'alert' : 'status');
+        el.textContent = message;
+        host.append(el);
+        setTimeout(() => {
+          el.style.transition = 'opacity .2s, transform .2s';
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(0.5rem)';
+          setTimeout(() => el.remove(), 220);
+        }, ms);
+      };
+
+      /* Message passé dans l'adresse après une redirection */
+      const params = new URLSearchParams(location.search);
+      const flash = params.get('message');
+      if (flash) {
+        window.toast(flash, params.get('erreur') ? 'danger' : 'success');
+        params.delete('message');
+        params.delete('erreur');
+        const query = params.toString();
+        history.replaceState(null, '', location.pathname + (query ? `?${query}` : ''));
+      }
+    </script>
+  </body>
+</html>

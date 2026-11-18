@@ -1,0 +1,112 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminIcon from '../../components/admin/AdminIcon.astro';
+import { listCustomers } from '../../lib/repo/orders';
+import { formatShort } from '../../lib/money';
+import { formatPhone, timeAgo, plural, normalizePhone } from '../../lib/text';
+
+const search = Astro.url.searchParams.get('q') ?? '';
+const customers = await listCustomers(search, 200);
+
+const totalSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+---
+
+<AdminLayout
+  title="Clients"
+  subtitle={customers.length === 0 ? 'Aucun client' : `${plural(customers.length, 'client')} · ${formatShort(totalSpent)} au total`}
+  wide
+>
+  <section class="card">
+    <form class="filters" method="GET">
+      <div class="filters__search">
+        <AdminIcon name="search" size={15} />
+        <input
+          type="search"
+          name="q"
+          value={search}
+          placeholder="Nom ou téléphone…"
+          aria-label="Rechercher un client"
+        />
+      </div>
+      <button class="btn btn--ghost btn--sm" type="submit">Chercher</button>
+      {search && <a class="btn btn--quiet btn--sm" href="/admin/clients">Effacer</a>}
+    </form>
+
+    {
+      customers.length === 0 ? (
+        <div class="empty">
+          <h3>{search ? 'Aucun client trouvé' : 'Pas encore de client'}</h3>
+          <p>
+            {search
+              ? 'Essayez avec un autre nom ou les derniers chiffres du numéro.'
+              : 'Chaque commande enregistre son client, reconnu ensuite à son numéro de téléphone.'}
+          </p>
+        </div>
+      ) : (
+        <div class="table-wrap">
+          <table class="data stackable">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Téléphone</th>
+                <th>Ville</th>
+                <th class="num">Commandes</th>
+                <th class="num">Total dépensé</th>
+                <th>Dernière</th>
+                <th class="tight"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                customers.map((customer) => (
+                  <tr>
+                    <td class="cell-span">
+                      <span style="font-weight:500">{customer.name}</span>
+                    </td>
+                    <td data-label="Téléphone">
+                      <a href={`tel:+${normalizePhone(customer.phone) ?? customer.phone}`} style="text-decoration:none">
+                        {formatPhone(customer.phone)}
+                      </a>
+                    </td>
+                    <td data-label="Ville" style="font-size:0.8125rem;color:var(--a-ink-muted)">
+                      {[customer.quarter, customer.city].filter(Boolean).join(', ') || '—'}
+                    </td>
+                    <td class="num" data-label="Commandes">{customer.ordersCount}</td>
+                    <td class="num money" data-label="Total" style="font-weight:600">
+                      {formatShort(customer.totalSpent)}
+                    </td>
+                    <td data-label="Dernière" style="font-size:0.8125rem;color:var(--a-ink-muted)">
+                      {timeAgo(customer.lastOrderAt)}
+                    </td>
+                    <td class="tight">
+                      <div style="display:flex;gap:0.125rem;justify-content:flex-end">
+                        <a
+                          class="btn btn--quiet btn--sm"
+                          href={`/admin/commandes?q=${encodeURIComponent(customer.phone)}&statut=all`}
+                          aria-label={`Commandes de ${customer.name}`}
+                        >
+                          <AdminIcon name="cart" size={14} />
+                        </a>
+                        <a
+                          class="btn btn--quiet btn--sm"
+                          href={`https://wa.me/${normalizePhone(customer.phone) ?? customer.phone}`}
+                          target="_blank"
+                          rel="noopener"
+                          aria-label={`Écrire à ${customer.name} sur WhatsApp`}
+                        >
+                          <AdminIcon name="whatsapp" size={14} />
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+  </section>
+</AdminLayout>

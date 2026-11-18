@@ -1,0 +1,606 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminIcon from '../../../components/admin/AdminIcon.astro';
+import {
+  listProducts, productCounts, listCategories,
+  type ProductFilters, type StockFilter, type ProductSort,
+} from '../../../lib/repo/products';
+import { divisions } from '../../../data/divisions';
+import { formatAmount } from '../../../lib/money';
+import { imageUrl } from '../../../lib/images';
+
+const q = Astro.url.searchParams;
+
+const filters: ProductFilters = {
+  search: q.get('q') ?? '',
+  status: (q.get('statut') ?? 'all') as ProductFilters['status'],
+  categoryId: q.get('rayon') ?? undefined,
+  division: q.get('activite') ?? undefined,
+  stock: (q.get('stock') ?? 'all') as StockFilter,
+  noImage: q.get('sansphoto') === '1',
+  noPrice: q.get('sansprix') === '1',
+  sort: (q.get('tri') ?? 'recent') as ProductSort,
+  page: Number.parseInt(q.get('page') ?? '1', 10) || 1,
+  perPage: Number.parseInt(q.get('par') ?? '50', 10) || 50,
+};
+
+const [{ rows, total, page, pages, perPage }, counts, categories] = await Promise.all([
+  listProducts(filters),
+  productCounts(),
+  listCategories(),
+]);
+
+/** Construit une adresse en conservant les filtres en cours. */
+function link(changes: Record<string, string | number | null>): string {
+  const next = new URLSearchParams(q);
+  for (const [key, value] of Object.entries(changes)) {
+    if (value === null || value === '' || value === 'all') next.delete(key);
+    else next.set(key, String(value));
+  }
+  // Tout changement de filtre ramène à la première page.
+  if (!('page' in changes)) next.delete('page');
+  const s = next.toString();
+  return `/admin/produits${s ? `?${s}` : ''}`;
+}
+
+const statusTabs = [
+  { key: 'all', label: 'Tous', count: counts.total },
+  { key: 'published', label: 'En ligne', count: counts.published },
+  { key: 'draft', label: 'Brouillons', count: counts.draft },
+  { key: 'archived', label: 'Archivés', count: counts.archived },
+];
+
+const alertTabs = [
+  { param: 'stock', value: 'out', label: 'En rupture', count: counts.out, alert: true },
+  { param: 'stock', value: 'low', label: 'Stock bas', count: counts.low, alert: false },
+  { param: 'sansphoto', value: '1', label: 'Sans photo', count: counts.noImage, alert: false },
+  { param: 'sansprix', value: '1', label: 'Sans prix', count: counts.noPrice, alert: true },
+];
+
+const sorts: { key: ProductSort; label: string }[] = [
+  { key: 'recent', label: 'Modifiés récemment' },
+  { key: 'name', label: 'Nom (A→Z)' },
+  { key: 'name-desc', label: 'Nom (Z→A)' },
+  { key: 'price-desc', label: 'Prix décroissant' },
+  { key: 'price', label: 'Prix croissant' },
+  { key: 'stock', label: 'Stock croissant' },
+  { key: 'stock-desc', label: 'Stock décroissant' },
+];
+
+const hasFilter =
+  Boolean(filters.search) || filters.status !== 'all' || Boolean(filters.categoryId) ||
+  Boolean(filters.division) || filters.stock !== 'all' || filters.noImage || filters.noPrice;
+
+const statusLabel: Record<string, string> = {
+  published: 'En ligne',
+  draft: 'Brouillon',
+  archived: 'Archivé',
+};
+
+const from = (page - 1) * perPage + 1;
+const to = Math.min(page * perPage, total);
+
+const filterPayload = JSON.stringify({
+  search: filters.search,
+  status: filters.status,
+  categoryId: filters.categoryId ?? '',
+  division: filters.division ?? '',
+  stock: filters.stock,
+  noImage: filters.noImage,
+  noPrice: filters.noPrice,
+  sort: filters.sort,
+});
+---
+
+<AdminLayout
+  title="Articles"
+  subtitle={total === 0
+    ? 'Catalogue vide'
+    : `${formatAmount(total)} article${total > 1 ? 's' : ''}${hasFilter ? ' trouvés' : ' au catalogue'}`}
+  wide
+>
+  <a class="btn btn--ghost btn--sm" href="/admin/ajout-rapide" slot="actions">
+    <AdminIcon name="zap" size={14} />
+    <span class="hide-sm">Saisie rapide</span>
+  </a>
+  <a class="btn btn--ghost btn--sm" href="/admin/import" slot="actions">
+    <AdminIcon name="upload" size={14} />
+    <span class="hide-sm">Importer</span>
+  </a>
+  <a class="btn btn--gold btn--sm" href="/admin/produits/nouveau" slot="actions">
+    <AdminIcon name="plus" size={14} />
+    Nouvel article
+  </a>
+
+  <section class="card" data-list data-filter={filterPayload} data-total={total}>
+    <form class="filters" method="GET" data-filters>
+      <div class="filters__search">
+        <AdminIcon name="search" size={15} />
+        <input
+          type="search"
+          name="q"
+          value={filters.search}
+          placeholder="Nom, référence, marque…"
+          aria-label="Rechercher un article"
+          autocomplete="off"
+        />
+      </div>
+
+      <select name="rayon" aria-label="Rayon" style="max-width:11rem">
+        <option value="">Tous les rayons</option>
+        {
+          categories.map((c) => (
+            <option value={c.id} selected={filters.categoryId === c.id}>
+              {c.name} ({c.productCount})
+            </option>
+          ))
+        }
+      </select>
+
+      <select name="activite" aria-label="Activité" style="max-width:10rem">
+        <option value="">Toutes activités</option>
+        {
+          divisions.map((d) => (
+            <option value={d.slug} selected={filters.division === d.slug}>{d.shortName}</option>
+          ))
+        }
+      </select>
+
+      <select name="tri" aria-label="Tri" style="max-width:11rem">
+        {sorts.map((s) => <option value={s.key} selected={filters.sort === s.key}>{s.label}</option>)}
+      </select>
+
+      <input type="hidden" name="statut" value={filters.status === 'all' ? '' : filters.status} />
+      <input type="hidden" name="stock" value={filters.stock === 'all' ? '' : filters.stock} />
+      {filters.noImage && <input type="hidden" name="sansphoto" value="1" />}
+      {filters.noPrice && <input type="hidden" name="sansprix" value="1" />}
+      <input type="hidden" name="par" value={String(perPage)} />
+
+      <button class="btn btn--ghost btn--sm" type="submit">Filtrer</button>
+      {
+        hasFilter && (
+          <a class="btn btn--quiet btn--sm" href="/admin/produits">
+            <AdminIcon name="x" size={13} />
+            Effacer
+          </a>
+        )
+      }
+    </form>
+
+    <div class="filters" style="padding-top:0.625rem;padding-bottom:0.625rem">
+      <div class="chips">
+        {
+          statusTabs.map((tab) => (
+            <a
+              class:list={['chip', { 'is-active': filters.status === tab.key }]}
+              href={link({ statut: tab.key === 'all' ? null : tab.key })}
+            >
+              {tab.label}
+              <span class="chip__n">{tab.count}</span>
+            </a>
+          ))
+        }
+
+        <span style="width:1px;height:1.25rem;background:var(--a-hair);margin:0 0.25rem"></span>
+
+        {
+          alertTabs.filter((t) => t.count > 0).map((tab) => {
+            const active =
+              tab.param === 'stock'
+                ? filters.stock === tab.value
+                : tab.param === 'sansphoto'
+                  ? filters.noImage
+                  : filters.noPrice;
+            return (
+              <a
+                class:list={['chip', { 'is-active': active, 'chip--alert': tab.alert }]}
+                href={link({ [tab.param]: active ? null : tab.value })}
+              >
+                {tab.label}
+                <span class="chip__n">{tab.count}</span>
+              </a>
+            );
+          })
+        }
+      </div>
+    </div>
+
+    {
+      rows.length === 0 ? (
+        <div class="empty">
+          <h3>{hasFilter ? 'Aucun article ne correspond' : 'Le catalogue est vide'}</h3>
+          <p>
+            {hasFilter
+              ? 'Modifiez la recherche ou effacez les filtres pour revoir tout le catalogue.'
+              : 'Deux chemins : déposer un fichier Excel ou CSV pour publier tout le stock d’un coup, ou saisir les premiers articles à la main.'}
+          </p>
+          <div class="btn-row" style="justify-content:center">
+            {hasFilter ? (
+              <a class="btn btn--ghost" href="/admin/produits">Voir tout le catalogue</a>
+            ) : (
+              <>
+                <a class="btn btn--gold" href="/admin/import">
+                  <AdminIcon name="upload" size={15} />
+                  Importer un fichier
+                </a>
+                <a class="btn btn--ghost" href="/admin/ajout-rapide">
+                  <AdminIcon name="zap" size={15} />
+                  Saisie rapide
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div class="table-wrap">
+            <table class="data stackable">
+              <thead>
+                <tr>
+                  <th class="cell-check">
+                    <input
+                      class="tick"
+                      type="checkbox"
+                      data-check-all
+                      aria-label="Tout sélectionner sur cette page"
+                    />
+                  </th>
+                  <th>Article</th>
+                  <th>Rayon</th>
+                  <th class="num">Prix</th>
+                  <th class="num">Stock</th>
+                  <th>Statut</th>
+                  <th class="tight"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  rows.map((p) => (
+                    <tr data-row data-id={p.id}>
+                      <td class="cell-check">
+                        <input
+                          class="tick"
+                          type="checkbox"
+                          data-check
+                          value={p.id}
+                          aria-label={`Sélectionner ${p.name}`}
+                        />
+                      </td>
+
+                      <td class="cell-span">
+                        <div class="cell-main">
+                          {p.imageFilename ? (
+                            <img
+                              class="thumb"
+                              src={imageUrl(p.imageFilename, p.imageWidths?.[0] ?? 400)}
+                              alt=""
+                              width="38"
+                              height="38"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <span class="thumb thumb--empty" aria-hidden="true">
+                              <AdminIcon name="image" size={14} />
+                            </span>
+                          )}
+                          <div class="cell-main__text">
+                            <span class="cell-main__name">
+                              <a href={`/admin/produits/${p.id}`}>{p.name}</a>
+                            </span>
+                            <span class="cell-main__meta">
+                              {p.sku}
+                              {p.imageCount > 1 ? ` · ${p.imageCount} photos` : ''}
+                              {p.brand ? ` · ${p.brand}` : ''}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td data-label="Rayon" style="color:var(--a-ink-muted);font-size:0.8125rem">
+                        {p.categoryName ?? '—'}
+                      </td>
+
+                      <td class="num editable" data-label="Prix">
+                        <input
+                          class="num"
+                          type="text"
+                          inputmode="numeric"
+                          value={p.price > 0 ? formatAmount(p.price) : ''}
+                          placeholder="0"
+                          data-edit="price"
+                          data-original={p.price > 0 ? formatAmount(p.price) : ''}
+                          aria-label={`Prix de ${p.name} en francs CFA`}
+                        />
+                      </td>
+
+                      <td class="num editable" data-label="Stock">
+                        {p.trackStock ? (
+                          <input
+                            class="num"
+                            type="text"
+                            inputmode="numeric"
+                            value={String(p.stock)}
+                            data-edit="stock"
+                            data-original={String(p.stock)}
+                            aria-label={`Stock de ${p.name}`}
+                          />
+                        ) : (
+                          <span style="padding:0 0.75rem;color:var(--a-ink-faint);font-size:0.8125rem">
+                            non suivi
+                          </span>
+                        )}
+                      </td>
+
+                      <td data-label="Statut">
+                        <span class:list={['tag', `tag--${p.status}`]}>{statusLabel[p.status]}</span>
+                        {p.trackStock && p.stock <= 0 && p.status === 'published' && (
+                          <span class="tag tag--out" style="margin-left:0.25rem">Épuisé</span>
+                        )}
+                      </td>
+
+                      <td class="tight">
+                        <div style="display:flex;gap:0.125rem;justify-content:flex-end">
+                          <a
+                            class="btn btn--quiet btn--sm"
+                            href={`/admin/produits/${p.id}`}
+                            aria-label={`Modifier ${p.name}`}
+                          >
+                            <AdminIcon name="edit" size={14} />
+                          </a>
+                          {p.status === 'published' && (
+                            <a
+                              class="btn btn--quiet btn--sm"
+                              href={`/boutique/${p.slug}`}
+                              target="_blank"
+                              rel="noopener"
+                              aria-label={`Voir ${p.name} sur la boutique`}
+                            >
+                              <AdminIcon name="eye" size={14} />
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card__foot">
+            <span class="pager" style="flex:1">
+              {from}–{to} sur {formatAmount(total)}
+              <span
+                data-select-all-hint
+                style="display:none;margin-left:0.5rem;padding-left:0.5rem;border-left:1px solid var(--a-hair)"
+              >
+                <button class="btn btn--quiet btn--sm" type="button" data-select-filter>
+                  Sélectionner les {formatAmount(total)} articles du filtre
+                </button>
+              </span>
+            </span>
+
+            <label
+              style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:var(--a-ink-muted)"
+            >
+              Par page
+              <select data-perpage style="width:auto;padding:0.25rem 1.5rem 0.25rem 0.5rem">
+                {[25, 50, 100, 200].map((n) => <option value={n} selected={perPage === n}>{n}</option>)}
+              </select>
+            </label>
+
+            {
+              pages > 1 && (
+                <div class="pager__links">
+                  <a
+                    class="pager__link"
+                    href={link({ page: page - 1 })}
+                    aria-disabled={page <= 1 ? 'true' : undefined}
+                    aria-label="Page précédente"
+                  >
+                    <AdminIcon name="chevron-left" size={14} />
+                  </a>
+                  {
+                    Array.from({ length: Math.min(pages, 7) }, (_, i) => {
+                      const start = Math.max(1, Math.min(page - 3, pages - 6));
+                      return pages <= 7 ? i + 1 : start + i;
+                    }).map((n) => (
+                      <a class:list={['pager__link', { 'is-active': n === page }]} href={link({ page: n })}>
+                        {n}
+                      </a>
+                    ))
+                  }
+                  <a
+                    class="pager__link"
+                    href={link({ page: page + 1 })}
+                    aria-disabled={page >= pages ? 'true' : undefined}
+                    aria-label="Page suivante"
+                  >
+                    <AdminIcon name="chevron-right" size={14} />
+                  </a>
+                </div>
+              )
+            }
+          </div>
+        </>
+      )
+    }
+  </section>
+
+  <div class="bulkbar" data-bulkbar>
+    <span class="bulkbar__count">
+      <strong data-bulk-count>0</strong> <span data-bulk-word>sélectionné</span>
+    </span>
+
+    <button class="btn btn--gold btn--sm" type="button" data-bulk="publier">
+      <AdminIcon name="check" size={14} />
+      Publier
+    </button>
+    <button class="btn btn--ghost btn--sm" type="button" data-bulk="brouillon">Brouillon</button>
+    <button class="btn btn--ghost btn--sm" type="button" data-open="prix">
+      <AdminIcon name="tag" size={14} />
+      Prix
+    </button>
+    <button class="btn btn--ghost btn--sm" type="button" data-open="stock">
+      <AdminIcon name="layers" size={14} />
+      Stock
+    </button>
+    <button class="btn btn--ghost btn--sm" type="button" data-open="rayon">Rayon</button>
+    <button class="btn btn--ghost btn--sm" type="button" data-bulk="archiver">Archiver</button>
+    <button class="btn btn--ghost btn--sm" type="button" data-bulk="supprimer">
+      <AdminIcon name="trash" size={14} />
+      Supprimer
+    </button>
+
+    <span class="bulkbar__spacer"></span>
+    <button class="bulkbar__close" type="button" data-bulk-clear aria-label="Annuler la sélection">
+      <AdminIcon name="x" size={16} />
+    </button>
+  </div>
+
+  <dialog class="modal" data-modal="prix">
+    <form data-modal-form="prix">
+      <div class="modal__head">
+        <div style="flex:1">
+          <h2>Modifier les prix</h2>
+          <p>S’applique aux <strong data-echo-count>0</strong> articles sélectionnés.</p>
+        </div>
+        <button class="modal__close" type="button" data-close aria-label="Fermer">
+          <AdminIcon name="x" size={18} />
+        </button>
+      </div>
+
+      <div class="modal__body stack">
+        <div class="field">
+          <label for="prix-mode">Comment</label>
+          <select id="prix-mode" name="mode" data-prix-mode>
+            <option value="percent">Augmenter ou baisser d’un pourcentage</option>
+            <option value="amount">Ajouter ou retirer un montant</option>
+            <option value="set">Fixer tous les prix à la même valeur</option>
+            <option value="round">Arrondir au multiple de</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="prix-valeur">Valeur</label>
+          <div class="input-affix">
+            <input id="prix-valeur" name="value" type="text" inputmode="numeric" value="5" required />
+            <span class="input-affix__suffix" data-prix-suffix>%</span>
+          </div>
+          <p class="field__hint" data-prix-hint>
+            Un nombre négatif baisse les prix. Exemple : -10 pour une remise de 10 %.
+          </p>
+        </div>
+
+        <div class="note note--warning">
+          <AdminIcon name="alert" size={15} />
+          <p>
+            Les prix sont arrondis au franc. Le prix affiché en boutique reste exactement
+            celui qui sera payé.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn btn--ghost" type="button" data-close>Annuler</button>
+        <button class="btn btn--gold" type="submit">Appliquer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" data-modal="stock">
+    <form data-modal-form="stock">
+      <div class="modal__head">
+        <div style="flex:1">
+          <h2>Modifier le stock</h2>
+          <p>S’applique aux <strong data-echo-count>0</strong> articles sélectionnés.</p>
+        </div>
+        <button class="modal__close" type="button" data-close aria-label="Fermer">
+          <AdminIcon name="x" size={18} />
+        </button>
+      </div>
+
+      <div class="modal__body stack">
+        <div class="field">
+          <label for="stock-mode">Comment</label>
+          <select id="stock-mode" name="mode">
+            <option value="set">Fixer le stock à</option>
+            <option value="adjust">Ajouter au stock actuel</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="stock-valeur">Quantité</label>
+          <input id="stock-valeur" name="value" type="text" inputmode="numeric" value="0" required />
+          <p class="field__hint">Chaque mouvement est inscrit dans l’historique de l’article.</p>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn btn--ghost" type="button" data-close>Annuler</button>
+        <button class="btn btn--gold" type="submit">Appliquer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" data-modal="rayon">
+    <form data-modal-form="rayon">
+      <div class="modal__head">
+        <div style="flex:1">
+          <h2>Changer de rayon</h2>
+          <p>S’applique aux <strong data-echo-count>0</strong> articles sélectionnés.</p>
+        </div>
+        <button class="modal__close" type="button" data-close aria-label="Fermer">
+          <AdminIcon name="x" size={18} />
+        </button>
+      </div>
+
+      <div class="modal__body stack">
+        <div class="field">
+          <label for="rayon-id">Rayon</label>
+          <select id="rayon-id" name="categoryId">
+            <option value="">Aucun rayon</option>
+            {categories.map((c) => <option value={c.id}>{c.name}</option>)}
+          </select>
+          <p class="field__hint">
+            Créez un nouveau rayon depuis la page <a href="/admin/categories">Rayons</a>.
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="rayon-activite">Activité de la maison</label>
+          <select id="rayon-activite" name="division">
+            <option value="">Ne pas changer</option>
+            {divisions.map((d) => <option value={d.slug}>{d.name}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn btn--ghost" type="button" data-close>Annuler</button>
+        <button class="btn btn--gold" type="submit">Appliquer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <style>
+    .tick {
+      width: 1rem;
+      height: 1rem;
+      accent-color: var(--a-gold-deep);
+      cursor: pointer;
+      margin: 0;
+    }
+
+    @media (max-width: 760px) {
+      .hide-sm { display: none; }
+    }
+  </style>
+
+  <script>
+    import '../../../scripts/admin-products';
+  </script>
+</AdminLayout>

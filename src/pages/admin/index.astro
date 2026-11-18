@@ -1,0 +1,308 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminIcon from '../../components/admin/AdminIcon.astro';
+import { dashboard, revenueSeries, topProducts, stockAlerts, revenueByCategory } from '../../lib/repo/stats';
+import { listOrders, STATUS_LABEL } from '../../lib/repo/orders';
+import { formatShort, formatCompact, formatAmount } from '../../lib/money';
+import { timeAgo, plural } from '../../lib/text';
+
+const stats = dashboard();
+const series = revenueSeries(30);
+const top = topProducts(30, 6);
+const alerts = stockAlerts(6);
+const byCategory = revenueByCategory(30, 5);
+const recent = await listOrders({ perPage: 7 });
+
+const peak = Math.max(...series.map((d) => d.revenue), 1);
+const categoryPeak = Math.max(...byCategory.map((c) => c.revenue), 1);
+
+const trend =
+  stats.monthChange === null
+    ? { kind: 'flat', label: 'Premier mois de ventes' }
+    : stats.monthChange > 0
+      ? { kind: 'up', label: `+${stats.monthChange} % sur 30 jours` }
+      : stats.monthChange < 0
+        ? { kind: 'down', label: `${stats.monthChange} % sur 30 jours` }
+        : { kind: 'flat', label: 'Stable sur 30 jours' };
+
+/* Ce qui mérite son attention avant tout le reste. */
+const todo = [
+  stats.pending > 0 && {
+    href: '/admin/commandes?statut=ouvertes',
+    icon: 'cart',
+    label: `${plural(stats.pending, 'commande')} à traiter`,
+    tone: 'warning',
+  },
+  stats.catalogue.outOfStock > 0 && {
+    href: '/admin/produits?stock=out',
+    icon: 'alert',
+    label: `${plural(stats.catalogue.outOfStock, 'article')} en rupture`,
+    tone: 'danger',
+  },
+  stats.catalogue.noImage > 0 && {
+    href: '/admin/photos',
+    icon: 'image',
+    label: `${plural(stats.catalogue.noImage, 'article publié', 'articles publiés')} sans photo`,
+    tone: 'info',
+  },
+  stats.catalogue.draft > 0 && {
+    href: '/admin/produits?statut=draft',
+    icon: 'file',
+    label: `${plural(stats.catalogue.draft, 'brouillon')} à relire`,
+    tone: 'info',
+  },
+].filter(Boolean) as { href: string; icon: string; label: string; tone: string }[];
+---
+
+<AdminLayout
+  title="Tableau de bord"
+  subtitle={`Ventes des 30 derniers jours · ${stats.catalogue.published} articles en ligne`}
+>
+  <a class="btn btn--ghost btn--sm" href="/admin/import" slot="actions">
+    <AdminIcon name="upload" size={14} />
+    Importer
+  </a>
+  <a class="btn btn--gold btn--sm" href="/admin/produits/nouveau" slot="actions">
+    <AdminIcon name="plus" size={14} />
+    Nouvel article
+  </a>
+
+  <div class="stack stack--loose">
+    {
+      todo.length > 0 && (
+        <div class="chips">
+          {todo.map((item) => (
+            <a class:list={['chip', { 'chip--alert': item.tone === 'danger' }]} href={item.href}>
+              <AdminIcon name={item.icon} size={13} />
+              {item.label}
+            </a>
+          ))}
+        </div>
+      )
+    }
+
+    <!-- Indicateurs -->
+    <div class="grid grid--kpi">
+      <div class="kpi kpi--accent">
+        <span class="kpi__label">Aujourd’hui</span>
+        <span class="kpi__value">{formatAmount(stats.today.revenue)}<small>FCFA</small></span>
+        <span class="kpi__note">
+          {stats.today.orders === 0
+            ? 'Aucune commande pour l’instant'
+            : `${plural(stats.today.orders, 'commande')} · ${plural(stats.today.items, 'article')}`}
+        </span>
+      </div>
+
+      <div class="kpi">
+        <span class="kpi__label">30 derniers jours</span>
+        <span class="kpi__value">{formatCompact(stats.month.revenue)}<small>FCFA</small></span>
+        <span class="kpi__note">
+          <span class:list={['trend', `trend--${trend.kind}`]}>
+            {trend.kind === 'up' ? '↑' : trend.kind === 'down' ? '↓' : '·'}
+          </span>
+          {trend.label}
+        </span>
+      </div>
+
+      <div class="kpi">
+        <span class="kpi__label">Panier moyen</span>
+        <span class="kpi__value">{formatAmount(stats.month.averageBasket)}<small>FCFA</small></span>
+        <span class="kpi__note">{plural(stats.month.orders, 'commande')} sur 30 jours</span>
+      </div>
+
+      <div class="kpi">
+        <span class="kpi__label">À traiter</span>
+        <span class="kpi__value">{stats.pending}</span>
+        <span class="kpi__note">
+          {stats.unpaid > 0 ? `${plural(stats.unpaid, 'paiement')} en attente` : 'Tout est réglé'}
+        </span>
+      </div>
+    </div>
+
+    <!-- Courbe des ventes -->
+    <section class="card">
+      <div class="card__head">
+        <div style="flex:1">
+          <h2>Ventes jour par jour</h2>
+          <p>Commandes annulées exclues. Total sur la période : {formatShort(stats.month.revenue)}.</p>
+        </div>
+      </div>
+      <div class="card__body">
+        {
+          stats.month.orders === 0 ? (
+            <div class="empty" style="padding:2rem 1rem">
+              <h3>Pas encore de vente</h3>
+              <p>
+                Dès la première commande, le chiffre d’affaires et les articles les plus
+                demandés apparaîtront ici.
+              </p>
+              <a class="btn btn--ghost btn--sm" href="/admin/import">
+                <AdminIcon name="upload" size={14} />
+                Publier le catalogue
+              </a>
+            </div>
+          ) : (
+            <div class="chart" role="img" aria-label={`Ventes des 30 derniers jours, total ${formatShort(stats.month.revenue)} francs CFA`}>
+              {series.map((day, i) => (
+                <div class="chart__col">
+                  <span class="chart__tip">
+                    {day.revenue > 0 ? formatShort(day.revenue) : 'aucune vente'}
+                    {day.orders > 0 ? ` · ${day.orders} cmd` : ''}
+                  </span>
+                  <span
+                    class:list={['chart__bar', { 'chart__bar--empty': day.revenue === 0 }]}
+                    style={`height:${Math.max(2, Math.round((day.revenue / peak) * 100))}%`}
+                  />
+                  {(i % 5 === 0 || i === series.length - 1) && (
+                    <span class="chart__label">{day.label}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </section>
+
+    <div class="grid grid--split">
+      <!-- Commandes récentes -->
+      <section class="card">
+        <div class="card__head">
+          <h2>Dernières commandes</h2>
+          <a class="btn btn--quiet btn--sm" href="/admin/commandes">
+            Tout voir
+            <AdminIcon name="chevron-right" size={13} />
+          </a>
+        </div>
+
+        {
+          recent.rows.length === 0 ? (
+            <div class="empty" style="padding:2rem 1rem">
+              <h3>Aucune commande</h3>
+              <p>Les commandes passées sur la boutique arrivent ici, avec le numéro du client.</p>
+            </div>
+          ) : (
+            <div class="rows">
+              {recent.rows.map((order) => (
+                <a class="row-item" href={`/admin/commandes/${order.id}`}>
+                  <div class="row-item__text">
+                    <span class="row-item__title">
+                      {order.customerName}
+                      <span style="color:var(--a-ink-faint);font-weight:400"> · {order.reference}</span>
+                    </span>
+                    <span class="row-item__meta">
+                      {timeAgo(order.createdAt)} · {plural(order.itemCount, 'article')}
+                      {order.deliveryMode === 'retrait' ? ' · retrait' : ''}
+                    </span>
+                  </div>
+                  <span class:list={['tag', `tag--${order.status}`]}>{STATUS_LABEL[order.status]}</span>
+                  <span class="row-item__value">{formatShort(order.total)}</span>
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </section>
+
+      <div class="stack">
+        <!-- Stock à surveiller -->
+        <section class="card">
+          <div class="card__head">
+            <h2>Stock à surveiller</h2>
+            {alerts.length > 0 && (
+              <a class="btn btn--quiet btn--sm" href="/admin/produits?stock=low">Tout voir</a>
+            )}
+          </div>
+
+          {
+            alerts.length === 0 ? (
+              <div class="card__body">
+                <p style="margin:0;font-size:0.875rem;color:var(--a-ink-muted)">
+                  Aucun article sous son seuil d’alerte.
+                </p>
+              </div>
+            ) : (
+              <div class="rows">
+                {alerts.map((item) => (
+                  <a class="row-item" href={`/admin/produits/${item.id}`}>
+                    <div class="row-item__text">
+                      <span class="row-item__title">{item.name}</span>
+                      <span class="row-item__meta">
+                        {item.sold30 > 0 ? `${item.sold30} vendus sur 30 jours` : item.sku}
+                      </span>
+                    </div>
+                    <span class:list={['tag', item.stock <= 0 ? 'tag--out' : 'tag--low']}>
+                      {item.stock <= 0 ? 'Épuisé' : `${item.stock} ${item.unit}`}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )
+          }
+        </section>
+
+        <!-- Meilleures ventes -->
+        <section class="card">
+          <div class="card__head">
+            <h2>Les plus vendus</h2>
+            <p style="margin:0;font-size:0.75rem;color:var(--a-ink-faint)">30 jours</p>
+          </div>
+
+          {
+            top.length === 0 ? (
+              <div class="card__body">
+                <p style="margin:0;font-size:0.875rem;color:var(--a-ink-muted)">
+                  Rien encore à classer.
+                </p>
+              </div>
+            ) : (
+              <div class="rows">
+                {top.map((item, i) => (
+                  <div class="row-item">
+                    <span class="rank">{i + 1}</span>
+                    <div class="row-item__text">
+                      <span class="row-item__title">{item.name}</span>
+                      <span class="row-item__meta">{item.quantity} vendus</span>
+                    </div>
+                    <span class="row-item__value">{formatShort(item.revenue)}</span>
+                  </div>
+                ))}
+              </div>
+            )
+          }
+        </section>
+
+        {
+          byCategory.length > 0 && (
+            <section class="card">
+              <div class="card__head">
+                <h2>Par rayon</h2>
+                <p style="margin:0;font-size:0.75rem;color:var(--a-ink-faint)">30 jours</p>
+              </div>
+              <div class="card__body stack stack--tight">
+                {byCategory.map((row) => (
+                  <div>
+                    <div
+                      style="display:flex;justify-content:space-between;gap:0.75rem;font-size:0.8125rem;margin-bottom:0.25rem"
+                    >
+                      <span>{row.name}</span>
+                      <span class="money" style="color:var(--a-ink-muted)">{formatShort(row.revenue)}</span>
+                    </div>
+                    <div class="bar">
+                      <div
+                        class="bar__fill"
+                        style={`width:${Math.max(3, Math.round((row.revenue / categoryPeak) * 100))}%`}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</AdminLayout>

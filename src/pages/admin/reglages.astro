@@ -1,0 +1,482 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminIcon from '../../components/admin/AdminIcon.astro';
+import { getSettings, saveSettings, type DeliveryZone } from '../../lib/settings';
+import { availableMethods, cinetpay } from '../../lib/payments';
+import { env } from '../../lib/env';
+import { site } from '../../data/site';
+import { formatAmount, parseAmount } from '../../lib/money';
+
+let saved = false;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const get = (key: string) => String(form.get(key) ?? '').trim();
+
+  // Les zones arrivent en deux listes parallèles : nom et forfait.
+  const names: string[] = form
+    .getAll('zoneName')
+    .map((value: FormDataEntryValue) => String(value).trim());
+  const fees: number[] = form
+    .getAll('zoneFee')
+    .map((value: FormDataEntryValue) => parseAmount(String(value)) ?? 0);
+
+  const zones: DeliveryZone[] = names
+    .map((name: string, i: number) => ({ name, fee: Math.max(0, fees[i] ?? 0) }))
+    .filter((zone: DeliveryZone) => zone.name.length > 0);
+
+  try {
+    await saveSettings({
+      open: form.get('open') === 'on',
+      closedMessage: get('closedMessage') || undefined,
+      zones: zones.length ? zones : undefined,
+      defaultDeliveryFee: Math.max(0, parseAmount(get('defaultDeliveryFee')) ?? 0),
+      freeDeliveryFrom: Math.max(0, parseAmount(get('freeDeliveryFrom')) ?? 0),
+      minimumOrder: Math.max(0, parseAmount(get('minimumOrder')) ?? 0),
+      whatsappNumber: get('whatsappNumber').replace(/[^\d]/g, ''),
+      shopIntro: get('shopIntro'),
+      payments: {
+        livraison: form.get('payLivraison') === 'on',
+        boutique: form.get('payBoutique') === 'on',
+        momo: form.get('payMomo') === 'on',
+      },
+    });
+    saved = true;
+  } catch (caught) {
+    error = caught instanceof Error ? caught.message : String(caught);
+  }
+}
+
+const config = getSettings();
+const methods = availableMethods();
+const momoReady = cinetpay.isConfigured();
+const user = Astro.locals.user!;
+---
+
+<AdminLayout title="Réglages" subtitle="Livraison, paiement et ouverture de la boutique">
+  {
+    saved && (
+      <div class="note note--success" style="margin-bottom:1.25rem" role="status">
+        <AdminIcon name="check" size={16} />
+        <p>Réglages enregistrés.</p>
+      </div>
+    )
+  }
+
+  {
+    error && (
+      <div class="note note--danger" style="margin-bottom:1.25rem" role="alert">
+        <AdminIcon name="alert" size={16} />
+        <p>{error}</p>
+      </div>
+    )
+  }
+
+  <form method="POST" class="grid grid--split" style="align-items:start">
+    <div class="stack">
+      <!-- Ouverture -->
+      <section class="card">
+        <div class="card__head"><h2>La boutique</h2></div>
+        <div class="card__body stack">
+          <label class="check">
+            <input type="checkbox" name="open" checked={config.open} />
+            <span>
+              Accepter les commandes
+              <small>
+                Décochez pendant un inventaire ou une fermeture : le catalogue
+                reste visible, mais on ne peut plus commander.
+              </small>
+            </span>
+          </label>
+
+          <div class="field">
+            <label for="closedMessage">Message quand la boutique est fermée</label>
+            <textarea
+              id="closedMessage"
+              name="closedMessage"
+              rows="2"
+              maxlength="400"
+              set:text={config.closedMessage}
+            />
+          </div>
+
+          <div class="field">
+            <label for="shopIntro">Phrase d’accueil de la boutique</label>
+            <input
+              id="shopIntro"
+              name="shopIntro"
+              type="text"
+              maxlength="200"
+              value={config.shopIntro}
+            />
+            <p class="field__hint">Affichée en tête du catalogue.</p>
+          </div>
+
+          <div class="field">
+            <label for="minimumOrder">Commande minimum</label>
+            <div class="input-affix">
+              <input
+                id="minimumOrder"
+                name="minimumOrder"
+                class="num"
+                type="text"
+                inputmode="numeric"
+                value={config.minimumOrder > 0 ? formatAmount(config.minimumOrder) : '0'}
+              />
+              <span class="input-affix__suffix">FCFA</span>
+            </div>
+            <p class="field__hint">0 pour n’imposer aucun minimum.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Livraison -->
+      <section class="card">
+        <div class="card__head">
+          <div style="flex:1">
+            <h2>Livraison</h2>
+            <p>Le forfait est annoncé avant de valider : aucun frais surprise.</p>
+          </div>
+        </div>
+
+        <div class="card__body stack">
+          <div data-zones class="stack stack--tight">
+            <p class="section-label" style="margin:0">Zones et forfaits</p>
+
+            {
+              config.zones.map((zone) => (
+                <div class="zone-row">
+                  <input
+                    type="text"
+                    name="zoneName"
+                    value={zone.name}
+                    maxlength="80"
+                    aria-label="Nom de la zone"
+                  />
+                  <div class="input-affix">
+                    <input
+                      type="text"
+                      name="zoneFee"
+                      class="num"
+                      inputmode="numeric"
+                      value={formatAmount(zone.fee)}
+                      aria-label="Forfait de livraison"
+                    />
+                    <span class="input-affix__suffix">FCFA</span>
+                  </div>
+                  <button class="btn btn--quiet btn--sm" type="button" data-remove-zone aria-label="Retirer cette zone">
+                    <AdminIcon name="x" size={14} />
+                  </button>
+                </div>
+              ))
+            }
+          </div>
+
+          <div>
+            <button class="btn btn--ghost btn--sm" type="button" data-add-zone>
+              <AdminIcon name="plus" size={14} />
+              Ajouter une zone
+            </button>
+          </div>
+
+          <div class="form-grid" style="margin-top:0.5rem">
+            <div class="field">
+              <label for="defaultDeliveryFee">Forfait par défaut</label>
+              <div class="input-affix">
+                <input
+                  id="defaultDeliveryFee"
+                  name="defaultDeliveryFee"
+                  class="num"
+                  type="text"
+                  inputmode="numeric"
+                  value={formatAmount(config.defaultDeliveryFee)}
+                />
+                <span class="input-affix__suffix">FCFA</span>
+              </div>
+              <p class="field__hint">Pour une ville absente de la liste.</p>
+            </div>
+
+            <div class="field">
+              <label for="freeDeliveryFrom">Livraison offerte à partir de</label>
+              <div class="input-affix">
+                <input
+                  id="freeDeliveryFrom"
+                  name="freeDeliveryFrom"
+                  class="num"
+                  type="text"
+                  inputmode="numeric"
+                  value={formatAmount(config.freeDeliveryFrom)}
+                />
+                <span class="input-affix__suffix">FCFA</span>
+              </div>
+              <p class="field__hint">0 pour ne jamais l’offrir.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paiement -->
+      <section class="card">
+        <div class="card__head">
+          <div style="flex:1">
+            <h2>Moyens de paiement</h2>
+            <p>Ce que le client peut choisir au moment de commander.</p>
+          </div>
+        </div>
+
+        <div class="card__body stack stack--tight">
+          <label class="check">
+            <input type="checkbox" name="payLivraison" checked={config.payments.livraison} />
+            <span>
+              Paiement à la livraison
+              <small>En espèces, à la remise de la commande.</small>
+            </span>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" name="payBoutique" checked={config.payments.boutique} />
+            <span>
+              Paiement en boutique
+              <small>Le client vient chercher et règle au comptoir.</small>
+            </span>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" name="payMomo" checked={config.payments.momo} disabled={!momoReady} />
+            <span>
+              Mobile Money — MTN et Orange
+              <small>
+                {momoReady
+                  ? 'Le client paie depuis son téléphone avant la livraison.'
+                  : 'À activer une fois le compte marchand CinetPay ouvert et les clés renseignées dans le fichier .env du serveur.'}
+              </small>
+            </span>
+          </label>
+
+          {
+            !momoReady && (
+              <div class="note note--info">
+                <AdminIcon name="info" size={15} />
+                <p>
+                  <strong>Le paiement mobile n’est pas encore branché.</strong>
+                  La boutique fonctionne malgré tout : les clients commandent et règlent
+                  à la livraison ou en boutique. Pour encaisser par MTN Mobile Money et
+                  Orange Money, ouvrez un compte marchand CinetPay, puis renseignez
+                  <code>CINETPAY_SITE_ID</code>, <code>CINETPAY_API_KEY</code> et
+                  <code>CINETPAY_SECRET_KEY</code> sur le serveur.
+                </p>
+              </div>
+            )
+          }
+
+          <div class="field" style="margin-top:0.5rem">
+            <label for="whatsappNumber">Numéro WhatsApp des commandes</label>
+            <input
+              id="whatsappNumber"
+              name="whatsappNumber"
+              type="text"
+              inputmode="tel"
+              value={config.whatsappNumber}
+              placeholder="237675201251"
+            />
+            <p class="field__hint">
+              Format international sans le « + ». Reçoit les commandes envoyées
+              depuis le bouton WhatsApp de la boutique.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="btn-row">
+        <button class="btn btn--gold" type="submit">
+          <AdminIcon name="check" size={15} />
+          Enregistrer les réglages
+        </button>
+      </div>
+    </div>
+
+    <!-- Colonne latérale -->
+    <div class="stack">
+      <section class="card">
+        <div class="card__head"><h2>Votre compte</h2></div>
+        <div class="card__body stack stack--tight">
+          <div>
+            <p class="section-label" style="margin-bottom:0.125rem">Nom</p>
+            <p style="margin:0">{user.name}</p>
+          </div>
+          <div>
+            <p class="section-label" style="margin-bottom:0.125rem">Adresse</p>
+            <p style="margin:0;font-size:0.875rem">{user.email}</p>
+          </div>
+          <div>
+            <p class="section-label" style="margin-bottom:0.125rem">Rôle</p>
+            <p style="margin:0;font-size:0.875rem">
+              {user.role === 'owner' ? 'Propriétaire' : 'Équipe'}
+            </p>
+          </div>
+        </div>
+        <div class="card__foot">
+          <a class="btn btn--ghost btn--sm" href="/admin/mot-de-passe">
+            <AdminIcon name="lock" size={14} />
+            Changer le mot de passe
+          </a>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__head"><h2>État du paiement</h2></div>
+        <div class="card__body">
+          <ul class="checks">
+            {
+              methods.map((method) => (
+                <li>
+                  <AdminIcon name="check" size={14} />
+                  <span>
+                    <strong>{method.label}</strong>
+                    <small>{method.hint}</small>
+                  </span>
+                </li>
+              ))
+            }
+            {
+              methods.length === 0 && (
+                <li style="color:var(--a-danger)">
+                  <AdminIcon name="alert" size={14} />
+                  <span>
+                    <strong>Aucun moyen de paiement actif</strong>
+                    <small>Les clients ne peuvent pas valider leur commande.</small>
+                  </span>
+                </li>
+              )
+            }
+          </ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__head"><h2>Sauvegarde</h2></div>
+        <div class="card__body">
+          <p style="margin:0 0 0.75rem;font-size:0.875rem;color:var(--a-ink-muted);line-height:1.55">
+            Toutes les données tiennent dans un fichier et un dossier de photos.
+            Sur le serveur :
+          </p>
+          <pre class="cmd">node scripts/outil.mjs sauvegarde</pre>
+          <p style="margin:0.625rem 0 0;font-size:0.75rem;color:var(--a-ink-faint);line-height:1.5">
+            Copiez aussi <code>{env.dataDir}/uploads</code>, qui contient les photos
+            des articles.
+          </p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__head"><h2>Coordonnées du site</h2></div>
+        <div class="card__body">
+          <p style="margin:0 0 0.625rem;font-size:0.875rem;color:var(--a-ink-muted);line-height:1.55">
+            Le téléphone, l’adresse et les horaires affichés sur le site public se
+            modifient dans le fichier <code>src/data/site.ts</code>.
+          </p>
+          <dl class="meta">
+            <dt>Téléphone</dt>
+            <dd>{site.phoneDisplay}</dd>
+            <dt>Adresse</dt>
+            <dd>{site.address}</dd>
+            <dt>Horaires</dt>
+            <dd>{site.hoursShort}</dd>
+          </dl>
+        </div>
+      </section>
+    </div>
+  </form>
+
+  <style>
+    .zone-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 9.5rem auto;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .checks {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.625rem;
+    }
+
+    .checks li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--a-success);
+    }
+
+    .checks span { color: var(--a-ink); }
+    .checks strong { display: block; font-weight: 500; }
+    .checks small { color: var(--a-ink-muted); font-size: 0.75rem; line-height: 1.45; display: block; }
+
+    /* Une commande à recopier : Arimo resserrée sur fond sombre,
+       sans introduire de troisième famille de caractères. */
+    .cmd {
+      margin: 0;
+      padding: 0.5rem 0.625rem;
+      background: var(--a-night);
+      color: var(--a-ivory);
+      border-radius: var(--a-radius);
+      font-family: var(--a-font);
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      overflow-x: auto;
+      user-select: all;
+    }
+
+    code {
+      font-family: var(--a-font);
+      font-size: 0.875em;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: rgba(11, 21, 38, 0.06);
+      padding: 0.0625rem 0.3125rem;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    .meta {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.25rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+    .meta dt { color: var(--a-ink-faint); }
+    .meta dd { margin: 0; color: var(--a-ink-muted); }
+  </style>
+
+  <script>
+    const zones = document.querySelector('[data-zones]');
+
+    document.querySelector('[data-add-zone]')?.addEventListener('click', () => {
+      if (!zones) return;
+      const row = document.createElement('div');
+      row.className = 'zone-row';
+      row.innerHTML = `
+        <input type="text" name="zoneName" maxlength="80" placeholder="Nom de la zone" aria-label="Nom de la zone" />
+        <div class="input-affix">
+          <input type="text" name="zoneFee" class="num" inputmode="numeric" value="0" aria-label="Forfait de livraison" />
+          <span class="input-affix__suffix">FCFA</span>
+        </div>
+        <button class="btn btn--quiet btn--sm" type="button" data-remove-zone aria-label="Retirer cette zone">×</button>`;
+      zones.append(row);
+      row.querySelector('input')?.focus();
+    });
+
+    zones?.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest('[data-remove-zone]');
+      if (button) button.closest('.zone-row')?.remove();
+    });
+  </script>
+</AdminLayout>

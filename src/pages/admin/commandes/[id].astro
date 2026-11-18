@@ -1,0 +1,457 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminIcon from '../../../components/admin/AdminIcon.astro';
+import {
+  getOrder, nextStatuses, STATUS_LABEL, PAYMENT_LABEL, PAYMENT_METHOD_LABEL, STATUS_ORDER,
+} from '../../../lib/repo/orders';
+import type { OrderStatus } from '../../../lib/db/schema';
+import { site } from '../../../data/site';
+import { formatShort } from '../../../lib/money';
+import { formatDateTime, formatPhone, normalizePhone, plural } from '../../../lib/text';
+
+const { id } = Astro.params;
+const order = await getOrder(id!);
+
+if (!order) {
+  return Astro.redirect('/admin/commandes?message=Commande introuvable.&erreur=1', 302);
+}
+
+const next = nextStatuses(order.status);
+
+/* Suivi visuel : où en est la commande. */
+const pipeline: OrderStatus[] = STATUS_ORDER.filter((s) => s !== 'annulee');
+const currentIndex = pipeline.indexOf(order.status);
+
+/* Message WhatsApp prêt à envoyer — c'est ainsi qu'on se parle ici. */
+const lines = order.items
+  .map((item) => `• ${item.quantity} × ${item.name} — ${formatShort(item.lineTotal)}`)
+  .join('\n');
+
+const whatsappText = encodeURIComponent(
+  `Bonjour ${order.customerName},\n\n` +
+    `Votre commande ${order.reference} chez ${site.name} :\n${lines}\n\n` +
+    (order.deliveryFee > 0 ? `Livraison : ${formatShort(order.deliveryFee)}\n` : '') +
+    `Total : ${formatShort(order.total)}\n\n` +
+    `${site.supportingLine}`,
+);
+
+const customerPhone = normalizePhone(order.customerPhone) ?? order.customerPhone;
+---
+
+<AdminLayout
+  title={order.reference}
+  subtitle={`${formatDateTime(order.createdAt)} · ${plural(order.items.length, 'ligne')}`}
+  back={{ href: '/admin/commandes', label: 'Commandes' }}
+>
+  <a
+    class="btn btn--ghost btn--sm"
+    href={`https://wa.me/${customerPhone}?text=${whatsappText}`}
+    target="_blank"
+    rel="noopener"
+    slot="actions"
+  >
+    <AdminIcon name="whatsapp" size={14} />
+    WhatsApp
+  </a>
+  <button class="btn btn--ghost btn--sm" type="button" data-print slot="actions">
+    <AdminIcon name="printer" size={14} />
+    Imprimer
+  </button>
+
+  <div class="grid grid--split" style="align-items:start" data-order={order.id}>
+    <div class="stack">
+      <!-- Suivi -->
+      <section class="card no-print">
+        <div class="card__head">
+          <div style="flex:1">
+            <h2>Suivi</h2>
+            <p>
+              {order.status === 'annulee'
+                ? 'Commande annulée. Le stock a été remis en place.'
+                : `État actuel : ${STATUS_LABEL[order.status].toLowerCase()}.`}
+            </p>
+          </div>
+          <span class:list={['tag', `tag--${order.status}`]}>{STATUS_LABEL[order.status]}</span>
+        </div>
+
+        <div class="card__body">
+          {
+            order.status !== 'annulee' && (
+              <ol class="steps" style="margin-bottom:1.125rem">
+                {pipeline.map((step, i) => (
+                  <li
+                    class:list={[
+                      { 'is-done': i < currentIndex, 'is-current': i === currentIndex },
+                    ]}
+                  >
+                    <span class="steps__n">
+                      {i < currentIndex ? <AdminIcon name="check" size={12} /> : i + 1}
+                    </span>
+                    {STATUS_LABEL[step]}
+                  </li>
+                ))}
+              </ol>
+            )
+          }
+
+          {
+            next.length > 0 ? (
+              <div class="btn-row">
+                {next.map((status, i) => (
+                  <button
+                    class:list={[
+                      'btn',
+                      status === 'annulee' ? 'btn--danger' : i === 0 ? 'btn--gold' : 'btn--ghost',
+                    ]}
+                    type="button"
+                    data-status={status}
+                  >
+                    {status === 'annulee' ? (
+                      <AdminIcon name="x" size={14} />
+                    ) : (
+                      <AdminIcon name="arrow-right" size={14} />
+                    )}
+                    {status === 'confirmee' && 'Confirmer la commande'}
+                    {status === 'preparee' && 'Marquer préparée'}
+                    {status === 'expediee' && 'Partie en livraison'}
+                    {status === 'livree' && 'Marquer livrée'}
+                    {status === 'annulee' && 'Annuler'}
+                    {status === 'nouvelle' && 'Rouvrir la commande'}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p style="margin:0;font-size:0.875rem;color:var(--a-ink-muted)">
+                Cette commande est terminée.
+              </p>
+            )
+          }
+        </div>
+      </section>
+
+      <!-- Détail -->
+      <section class="card">
+        <div class="card__head">
+          <div style="flex:1">
+            <h2>Articles commandés</h2>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Article</th>
+                <th class="num">Prix unitaire</th>
+                <th class="num">Quantité</th>
+                <th class="num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                order.items.map((item) => (
+                  <tr>
+                    <td>
+                      <span style="font-weight:500;display:block">
+                        {item.productId ? (
+                          <a
+                            href={`/admin/produits/${item.productId}`}
+                            style="text-decoration:none"
+                          >
+                            {item.name}
+                          </a>
+                        ) : (
+                          item.name
+                        )}
+                      </span>
+                      <span class="cell-main__meta">{item.sku}</span>
+                    </td>
+                    <td class="num money">{formatShort(item.unitPrice)}</td>
+                    <td class="num money">
+                      {item.quantity} {item.unit}
+                    </td>
+                    <td class="num money" style="font-weight:600">{formatShort(item.lineTotal)}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card__foot" style="display:block">
+          <dl class="totals">
+            <dt>Sous-total</dt>
+            <dd>{formatShort(order.subtotal)}</dd>
+
+            <dt>
+              {order.deliveryMode === 'retrait' ? 'Retrait en boutique' : 'Livraison'}
+            </dt>
+            <dd>{order.deliveryFee > 0 ? formatShort(order.deliveryFee) : 'offerte'}</dd>
+
+            {
+              order.discount > 0 && (
+                <>
+                  <dt>Remise</dt>
+                  <dd>− {formatShort(order.discount)}</dd>
+                </>
+              )
+            }
+
+            <dt class="totals__grand">Total</dt>
+            <dd class="totals__grand">{formatShort(order.total)}</dd>
+          </dl>
+
+          <p class="totals__note">
+            Le prix affiché est le prix payé. Aucun frais n’a été ajouté après la commande.
+          </p>
+        </div>
+      </section>
+
+      <!-- Note interne -->
+      <section class="card no-print">
+        <div class="card__head">
+          <div style="flex:1">
+            <h2>Note interne</h2>
+            <p>Visible uniquement dans le back-office.</p>
+          </div>
+        </div>
+        <div class="card__body">
+          <textarea
+            data-note
+            rows="3"
+            maxlength="2000"
+            placeholder="Ce que l’équipe doit savoir sur cette commande…"
+            set:text={order.internalNote ?? ''}
+          />
+          <div class="btn-row" style="margin-top:0.625rem">
+            <button class="btn btn--ghost btn--sm" type="button" data-save-note>
+              <AdminIcon name="save" size={14} />
+              Enregistrer la note
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Colonne latérale -->
+    <div class="stack">
+      <section class="card">
+        <div class="card__head"><h2>Client</h2></div>
+        <div class="card__body stack stack--tight">
+          <div>
+            <p class="section-label" style="margin-bottom:0.125rem">Nom</p>
+            <p style="margin:0;font-weight:500">{order.customerName}</p>
+          </div>
+
+          <div>
+            <p class="section-label" style="margin-bottom:0.125rem">Téléphone</p>
+            <p style="margin:0">
+              <a href={`tel:+${customerPhone}`} style="text-decoration:none">
+                {formatPhone(order.customerPhone)}
+              </a>
+            </p>
+          </div>
+
+          {
+            order.customerEmail && (
+              <div>
+                <p class="section-label" style="margin-bottom:0.125rem">E-mail</p>
+                <p style="margin:0">
+                  <a href={`mailto:${order.customerEmail}`} style="text-decoration:none">
+                    {order.customerEmail}
+                  </a>
+                </p>
+              </div>
+            )
+          }
+
+          <div>
+            <p class="section-label" style="margin-bottom:0.125rem">
+              {order.deliveryMode === 'retrait' ? 'Retrait' : 'Adresse de livraison'}
+            </p>
+            <p style="margin:0;font-size:0.875rem;line-height:1.5">
+              {
+                order.deliveryMode === 'retrait'
+                  ? `Retrait en boutique · ${site.city}`
+                  : [order.address, order.quarter, order.city].filter(Boolean).join(', ') || '—'
+              }
+            </p>
+          </div>
+
+          {
+            order.note && (
+              <div>
+                <p class="section-label" style="margin-bottom:0.125rem">Message du client</p>
+                <p
+                  style="margin:0;font-size:0.875rem;line-height:1.5;padding:0.5rem 0.625rem;background:var(--a-ivory-soft);border-radius:var(--a-radius)"
+                >
+                  {order.note}
+                </p>
+              </div>
+            )
+          }
+        </div>
+
+        <div class="card__foot no-print">
+          <a
+            class="btn btn--ghost btn--sm"
+            href={`https://wa.me/${customerPhone}?text=${whatsappText}`}
+            target="_blank"
+            rel="noopener"
+          >
+            <AdminIcon name="whatsapp" size={14} />
+            Écrire sur WhatsApp
+          </a>
+          <a class="btn btn--ghost btn--sm" href={`tel:+${customerPhone}`}>
+            <AdminIcon name="phone" size={14} />
+            Appeler
+          </a>
+        </div>
+      </section>
+
+      <section class="card no-print">
+        <div class="card__head"><h2>Paiement</h2></div>
+        <div class="card__body stack stack--tight">
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <span class:list={['tag', `tag--${order.paymentStatus}`]}>
+              {PAYMENT_LABEL[order.paymentStatus]}
+            </span>
+            <span style="font-size:0.8125rem;color:var(--a-ink-muted)">
+              {PAYMENT_METHOD_LABEL[order.paymentMethod] ?? order.paymentMethod}
+            </span>
+          </div>
+
+          <div class="field">
+            <label for="paiement">Marquer le paiement</label>
+            <select id="paiement" data-payment>
+              <option value="en_attente" selected={order.paymentStatus === 'en_attente'}>En attente</option>
+              <option value="paye" selected={order.paymentStatus === 'paye'}>Payée</option>
+              <option value="echoue" selected={order.paymentStatus === 'echoue'}>Échouée</option>
+              <option value="rembourse" selected={order.paymentStatus === 'rembourse'}>Remboursée</option>
+            </select>
+          </div>
+
+          {
+            order.providerRef && (
+              <p style="margin:0;font-size:0.75rem;color:var(--a-ink-faint)">
+                Référence prestataire : {order.providerRef}
+              </p>
+            )
+          }
+        </div>
+      </section>
+
+      <section class="card no-print">
+        <div class="card__body">
+          <dl class="meta">
+            <dt>Reçue</dt>
+            <dd>{formatDateTime(order.createdAt)}</dd>
+            {order.confirmedAt && (
+              <>
+                <dt>Confirmée</dt>
+                <dd>{formatDateTime(order.confirmedAt)}</dd>
+              </>
+            )}
+            {order.deliveredAt && (
+              <>
+                <dt>Livrée</dt>
+                <dd>{formatDateTime(order.deliveredAt)}</dd>
+              </>
+            )}
+            <dt>Canal</dt>
+            <dd>{order.channel}</dd>
+          </dl>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- En-tête visible à l'impression seulement -->
+  <div class="print-head" aria-hidden="true">
+    <p class="print-head__brand">{site.legalName}</p>
+    <p class="print-head__line">
+      {site.address} · {site.phoneDisplay} · {site.email}
+    </p>
+    <p class="print-head__ref">
+      Commande {order.reference} — {formatDateTime(order.createdAt)}
+    </p>
+  </div>
+
+  <style>
+    .totals {
+      margin: 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.3125rem 1rem;
+      font-size: 0.875rem;
+      width: min(22rem, 100%);
+      margin-left: auto;
+    }
+
+    .totals dt { color: var(--a-ink-muted); }
+
+    .totals dd {
+      margin: 0;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .totals__grand {
+      font-family: var(--a-serif);
+      font-size: 1.125rem;
+      color: var(--a-ink) !important;
+      padding-top: 0.4375rem;
+      border-top: 1px solid var(--a-hair);
+      margin-top: 0.25rem;
+    }
+
+    .totals__note {
+      margin: 0.875rem 0 0;
+      font-size: 0.75rem;
+      color: var(--a-ink-faint);
+      font-style: italic;
+    }
+
+    .meta {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.25rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+    .meta dt { color: var(--a-ink-faint); }
+    .meta dd { margin: 0; color: var(--a-ink-muted); }
+
+    .print-head { display: none; }
+
+    @media print {
+      .print-head {
+        display: block;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1.5px solid #0b1526;
+      }
+      .print-head__brand {
+        font-family: var(--a-serif);
+        font-size: 1.25rem;
+        margin: 0 0 0.25rem;
+      }
+      .print-head__line,
+      .print-head__ref {
+        margin: 0;
+        font-size: 0.75rem;
+        color: #555;
+      }
+      .print-head__ref { margin-top: 0.5rem; font-weight: 600; color: #000; }
+
+      .grid--split { grid-template-columns: 1fr; gap: 1rem; }
+      .card__head p { display: none; }
+    }
+  </style>
+
+  <script>
+    import '../../../scripts/admin-order';
+  </script>
+</AdminLayout>

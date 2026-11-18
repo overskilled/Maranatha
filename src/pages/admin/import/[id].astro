@@ -1,0 +1,360 @@
+---
+export const prerender = false;
+
+import { readFile } from 'node:fs/promises';
+import { eq, desc } from 'drizzle-orm';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminIcon from '../../../components/admin/AdminIcon.astro';
+import { db } from '../../../lib/db';
+import { importJobs, importProfiles } from '../../../lib/db/schema';
+import { parseFile } from '../../../lib/import/parse';
+import { FIELDS } from '../../../lib/import/columns';
+import { normalizeOptions } from '../../../lib/import/engine';
+import { listCategories } from '../../../lib/repo/products';
+import { divisions } from '../../../data/divisions';
+import { formatAmount } from '../../../lib/money';
+import { truncate } from '../../../lib/text';
+
+const { id } = Astro.params;
+
+const found = await db.select().from(importJobs).where(eq(importJobs.id, id!)).limit(1);
+const job = found[0];
+
+if (!job) {
+  return Astro.redirect('/admin/import?message=Import introuvable.&erreur=1', 302);
+}
+if (job.status === 'termine') {
+  return Astro.redirect(`/admin/import?message=${encodeURIComponent(job.message ?? 'Import déjà appliqué.')}`, 302);
+}
+
+/* Quelques lignes du fichier, pour montrer ce que contient chaque colonne. */
+let sampleRows: Record<string, string>[] = [];
+let readError: string | null = null;
+
+try {
+  if (!job.storedPath) throw new Error('Fichier déposé introuvable.');
+  const parsed = await parseFile(await readFile(job.storedPath), job.filename);
+  sampleRows = parsed.rows.slice(0, 3);
+} catch (error) {
+  readError = error instanceof Error ? error.message : String(error);
+}
+
+const headers = job.headers ?? [];
+const mapping = (job.mapping ?? {}) as Record<string, string>;
+const options = normalizeOptions(job.options);
+
+const [categories, profiles] = await Promise.all([
+  listCategories(),
+  db.select().from(importProfiles).orderBy(desc(importProfiles.lastUsedAt)).limit(10),
+]);
+
+const mappedCount = Object.values(mapping).filter(Boolean).length;
+const running = job.status === 'en_cours';
+---
+
+<AdminLayout
+  title="Vérifier avant d’appliquer"
+  subtitle={`${job.filename} · ${formatAmount(job.totalRows)} lignes`}
+  back={{ href: '/admin/import', label: 'Import en lot' }}
+  wide
+>
+  <ol class="steps">
+    <li class="is-done"><span class="steps__n"><AdminIcon name="check" size={12} /></span> Fichier déposé</li>
+    <li class="is-current"><span class="steps__n">2</span> Correspondance et aperçu</li>
+    <li><span class="steps__n">3</span> Application</li>
+  </ol>
+
+  {
+    readError && (
+      <div class="note note--danger" style="margin-bottom:1.25rem" role="alert">
+        <AdminIcon name="alert" size={16} />
+        <p>
+          <strong>Le fichier n’a pas pu être relu :</strong> {readError}
+          <br />
+          Redéposez-le depuis <a href="/admin/import">la page d’import</a>.
+        </p>
+      </div>
+    )
+  }
+
+  <div
+    class="stack stack--loose"
+    data-import
+    data-id={job.id}
+    data-running={running ? '1' : '0'}
+  >
+    <!-- Correspondance des colonnes -->
+    <section class="card">
+      <div class="card__head">
+        <div style="flex:1">
+          <h2>Correspondance des colonnes</h2>
+          <p>
+            {mappedCount} colonne{mappedCount > 1 ? 's' : ''} sur {headers.length} associée{mappedCount > 1 ? 's' : ''}.
+            Les colonnes « non utilisée » sont simplement ignorées.
+          </p>
+        </div>
+
+        {
+          profiles.length > 0 && (
+            <label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem">
+              <span style="color:var(--a-ink-muted);white-space:nowrap">Modèle</span>
+              <select data-profile style="width:auto;min-width:9rem">
+                <option value="">—</option>
+                {profiles.map((profile) => (
+                  <option value={JSON.stringify(profile.mapping)}>{profile.name}</option>
+                ))}
+              </select>
+            </label>
+          )
+        }
+      </div>
+
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th style="width:24%">Colonne du fichier</th>
+              <th style="width:34%">Contenu lu dans votre fichier</th>
+              <th style="width:42%">Champ de l’article</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              headers.map((header) => {
+                const samples = sampleRows
+                  .map((row) => row[header])
+                  .filter((v) => v !== undefined && v !== '')
+                  .slice(0, 3);
+                return (
+                  <tr>
+                    <td>
+                      <span style="font-weight:500">{header}</span>
+                    </td>
+                    <td style="color:var(--a-ink-muted);font-size:0.8125rem">
+                      {samples.length ? (
+                        samples.map((sample, i) => (
+                          <>
+                            {i > 0 && <span style="color:var(--a-ink-faint)"> · </span>}
+                            <span>{truncate(sample, 40)}</span>
+                          </>
+                        ))
+                      ) : (
+                        <em style="color:var(--a-ink-faint)">colonne vide</em>
+                      )}
+                    </td>
+                    <td>
+                      <select data-map={header} aria-label={`Champ pour la colonne ${header}`}>
+                        <option value="">— non utilisée —</option>
+                        {FIELDS.map((field) => (
+                          <option value={field.key} selected={mapping[header] === field.key}>
+                            {field.label}
+                            {field.required ? ' (obligatoire)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                );
+              })
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card__foot">
+        <button class="btn btn--ghost btn--sm" type="button" data-save-profile>
+          <AdminIcon name="save" size={14} />
+          Enregistrer cette correspondance
+        </button>
+        <span style="font-size:0.8125rem;color:var(--a-ink-muted)">
+          Pour la réappliquer au prochain fichier du même fournisseur.
+        </span>
+      </div>
+    </section>
+
+    <!-- Réglages -->
+    <section class="card">
+      <div class="card__head">
+        <h2>Réglages de cet import</h2>
+      </div>
+
+      <div class="card__body">
+        <div class="form-grid form-grid--2">
+          <div class="field">
+            <label for="opt-mode">Que faire des références déjà au catalogue</label>
+            <select id="opt-mode" data-opt="mode">
+              <option value="upsert" selected={options.mode === 'upsert'}>
+                Mettre à jour l’existant, créer le reste
+              </option>
+              <option value="create" selected={options.mode === 'create'}>
+                Créer seulement les nouveaux articles
+              </option>
+              <option value="update" selected={options.mode === 'update'}>
+                Mettre à jour seulement l’existant
+              </option>
+            </select>
+            <p class="field__hint">
+              Le rapprochement se fait sur la référence. Sans référence dans le
+              fichier, elle est déduite du nom de l’article.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="opt-status">Statut des articles créés</label>
+            <select id="opt-status" data-opt="defaultStatus">
+              <option value="draft" selected={options.defaultStatus === 'draft'}>
+                Brouillon — à relire avant publication
+              </option>
+              <option value="published" selected={options.defaultStatus === 'published'}>
+                Publié immédiatement en boutique
+              </option>
+            </select>
+            <p class="field__hint">
+              Le brouillon est plus prudent : vous relisez, puis vous publiez
+              tout d’un coup depuis la liste des articles.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="opt-category">Rayon par défaut</label>
+            <select id="opt-category" data-opt="defaultCategoryId">
+              <option value="">Aucun</option>
+              {
+                categories.map((c) => (
+                  <option value={c.id} selected={options.defaultCategoryId === c.id}>{c.name}</option>
+                ))
+              }
+            </select>
+            <p class="field__hint">Appliqué aux lignes sans colonne de catégorie.</p>
+          </div>
+
+          <div class="field">
+            <label for="opt-division">Activité par défaut</label>
+            <select id="opt-division" data-opt="defaultDivision">
+              <option value="">Aucune</option>
+              {
+                divisions.map((d) => (
+                  <option value={d.slug} selected={options.defaultDivision === d.slug}>{d.name}</option>
+                ))
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="opt-margin">Marge à appliquer si le fichier n’a que le prix d’achat</label>
+            <div class="input-affix">
+              <input
+                id="opt-margin"
+                type="text"
+                inputmode="numeric"
+                data-opt="marginPercent"
+                value={options.marginPercent ?? ''}
+                placeholder="laisser vide"
+              />
+              <span class="input-affix__suffix">%</span>
+            </div>
+            <p class="field__hint">
+              Exemple : 25 pour vendre un article acheté 4 000 à 5 000.
+              Sans effet si la colonne « prix de vente » est associée.
+            </p>
+          </div>
+        </div>
+
+        <fieldset class="stack stack--tight" style="margin-top:1.125rem">
+          <legend class="section-label" style="margin-bottom:0.5rem">Précautions</legend>
+
+          <label class="check">
+            <input type="checkbox" data-opt="createCategories" checked={options.createCategories} />
+            <span>
+              Créer les rayons absents
+              <small>Une catégorie inconnue dans le fichier est créée au lieu d’être refusée.</small>
+            </span>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" data-opt="keepExistingPrice" checked={options.keepExistingPrice} />
+            <span>
+              Ne pas toucher aux prix déjà en place
+              <small>Pour un import qui n’actualise que les stocks.</small>
+            </span>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" data-opt="keepExistingStock" checked={options.keepExistingStock} />
+            <span>
+              Ne pas toucher aux stocks déjà en place
+              <small>Pour un import qui n’actualise que les tarifs.</small>
+            </span>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" data-opt="skipWithoutPrice" checked={options.skipWithoutPrice} />
+            <span>
+              Ignorer les lignes sans prix
+              <small>Plutôt que de créer des articles à 0 franc, impubliables en boutique.</small>
+            </span>
+          </label>
+        </fieldset>
+      </div>
+
+      <div class="card__foot">
+        <button class="btn btn--ghost" type="button" data-preview>
+          <AdminIcon name="refresh" size={15} />
+          Recalculer l’aperçu
+        </button>
+      </div>
+    </section>
+
+    <!-- Aperçu -->
+    <section class="card" data-preview-card>
+      <div class="card__head">
+        <div style="flex:1">
+          <h2>Aperçu</h2>
+          <p>Ce qui sera écrit si vous appliquez. Rien n’est encore enregistré.</p>
+        </div>
+      </div>
+
+      <div class="card__body" data-preview-body>
+        <p style="margin:0;font-size:0.875rem;color:var(--a-ink-muted)">Calcul en cours…</p>
+      </div>
+    </section>
+
+    <!-- Application -->
+    <section class="card" data-apply-card>
+      <div class="card__body">
+        <div
+          style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;justify-content:space-between"
+        >
+          <div>
+            <h2 style="font-size:1.0625rem;margin-bottom:0.1875rem">Appliquer l’import</h2>
+            <p style="margin:0;font-size:0.8125rem;color:var(--a-ink-muted)" data-apply-text>
+              Vérifiez l’aperçu ci-dessus avant de lancer.
+            </p>
+          </div>
+          <button class="btn btn--gold" type="button" data-apply disabled>
+            <AdminIcon name="check" size={15} />
+            Appliquer au catalogue
+          </button>
+        </div>
+
+        <div data-progress style="display:none;margin-top:1.25rem">
+          <div class="bar">
+            <div class="bar__fill" data-progress-bar style="width:0%"></div>
+          </div>
+          <p
+            style="margin:0.5rem 0 0;font-size:0.8125rem;color:var(--a-ink-muted);font-variant-numeric:tabular-nums"
+            data-progress-text
+          >
+            Démarrage…
+          </p>
+        </div>
+
+        <div data-result style="display:none;margin-top:1.25rem"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import '../../../scripts/admin-import-wizard';
+  </script>
+</AdminLayout>

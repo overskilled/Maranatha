@@ -1,0 +1,596 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminIcon from '../../../components/admin/AdminIcon.astro';
+import {
+  getProduct, createProduct, updateProduct, listCategories, stockHistory, safeJson,
+} from '../../../lib/repo/products';
+import { divisions } from '../../../data/divisions';
+import { parseAmount, parseQuantity, formatAmount, marginPercent } from '../../../lib/money';
+import { formatDateTime, timeAgo } from '../../../lib/text';
+import { imageUrl, imageSrcset } from '../../../lib/images';
+
+const { id } = Astro.params;
+const isNew = id === 'nouveau';
+
+let product = isNew ? null : await getProduct(id!);
+if (!isNew && !product) {
+  return Astro.redirect('/admin/produits?message=Article introuvable.&erreur=1', 302);
+}
+
+const categories = await listCategories();
+let error: string | null = null;
+
+/* ---------- Enregistrement ---------- */
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const get = (key: string) => String(form.get(key) ?? '').trim();
+
+  const name = get('name');
+  const priceRaw = get('price');
+  const price = priceRaw ? parseAmount(priceRaw) : 0;
+
+  if (!name) {
+    error = 'Le nom de l’article est obligatoire.';
+  } else if (price === null) {
+    error = `Le prix « ${priceRaw} » n’est pas un montant valide.`;
+  } else {
+    const comparePriceRaw = get('comparePrice');
+    const costRaw = get('cost');
+
+    const input = {
+      name,
+      sku: get('sku') || undefined,
+      description: get('description') || null,
+      categoryId: get('categoryId') || null,
+      division: get('division') || null,
+      price: Math.max(0, price),
+      comparePrice: comparePriceRaw ? parseAmount(comparePriceRaw) : null,
+      cost: costRaw ? parseAmount(costRaw) : null,
+      unit: get('unit') || 'pièce',
+      minQuantity: Math.max(1, parseQuantity(get('minQuantity')) ?? 1),
+      trackStock: form.get('trackStock') === 'on',
+      stock: parseQuantity(get('stock')) ?? 0,
+      lowStockThreshold: Math.max(0, parseQuantity(get('lowStockThreshold')) ?? 5),
+      status: get('status') as 'draft' | 'published' | 'archived',
+      featured: form.get('featured') === 'on',
+      brand: get('brand') || null,
+      origin: get('origin') || null,
+      barcode: get('barcode') || null,
+      weightGrams: get('weightGrams') ? parseQuantity(get('weightGrams')) : null,
+      tags: get('tags'),
+    };
+
+    try {
+      if (isNew) {
+        const created = createProduct(input);
+        return Astro.redirect(
+          `/admin/produits/${created.id}?message=${encodeURIComponent('Article créé. Ajoutez une photo pour le mettre en valeur.')}`,
+          303,
+        );
+      }
+      await updateProduct(id!, input);
+      return Astro.redirect(
+        `/admin/produits/${id}?message=${encodeURIComponent('Modifications enregistrées.')}`,
+        303,
+      );
+    } catch (caught) {
+      error = caught instanceof Error ? caught.message : String(caught);
+      product = isNew ? null : await getProduct(id!);
+    }
+  }
+}
+
+/* ---------- Affichage ---------- */
+
+const history = product ? await stockHistory(product.id, 12) : [];
+const tags = product ? (safeJson<string[]>(product.tags) ?? []) : [];
+const margin = product ? marginPercent(product.price, product.cost) : null;
+
+const UNITS = ['pièce', 'kg', 'sac', 'carton', 'litre', 'bidon', 'mètre', 'paquet', 'boîte', 'barre', 'feuille', 'seau', 'paire', 'rouleau', 'lot'];
+
+const reasonLabel: Record<string, string> = {
+  vente: 'Vente',
+  import: 'Import',
+  ajustement: 'Ajustement',
+  retour: 'Retour',
+  perte: 'Perte',
+  reception: 'Réception',
+};
+---
+
+<AdminLayout
+  title={isNew ? 'Nouvel article' : (product?.name ?? '')}
+  subtitle={isNew ? 'Une fiche, un prix, un stock' : `Référence ${product?.sku}`}
+  back={{ href: '/admin/produits', label: 'Articles' }}
+>
+  {
+    product?.status === 'published' && (
+      <a
+        class="btn btn--ghost btn--sm"
+        href={`/boutique/${product.slug}`}
+        target="_blank"
+        rel="noopener"
+        slot="actions"
+      >
+        <AdminIcon name="eye" size={14} />
+        Voir en boutique
+      </a>
+    )
+  }
+  <button class="btn btn--gold btn--sm" type="submit" form="fiche" slot="actions">
+    <AdminIcon name="check" size={14} />
+    Enregistrer
+  </button>
+
+  {
+    error && (
+      <div class="note note--danger" style="margin-bottom:1.25rem" role="alert">
+        <AdminIcon name="alert" size={16} />
+        <p>{error}</p>
+      </div>
+    )
+  }
+
+  <form method="POST" id="fiche" class="grid grid--split" style="align-items:start">
+    <!-- Colonne principale -->
+    <div class="stack">
+      <section class="card">
+        <div class="card__head"><h2>L’article</h2></div>
+        <div class="card__body stack">
+          <div class="field">
+            <label for="name">Nom <span style="color:var(--a-danger)">*</span></label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              value={product?.name ?? ''}
+              required
+              maxlength="300"
+              placeholder="Riz parfumé 25 kg"
+              autofocus={isNew}
+            />
+            <p class="field__hint">Le nom que le client lit en vitrine.</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="sku">Référence</label>
+              <input
+                id="sku"
+                name="sku"
+                type="text"
+                value={product?.sku ?? ''}
+                placeholder={isNew ? 'déduite du nom' : ''}
+                maxlength="48"
+              />
+              <p class="field__hint">Clé des imports et des photos.</p>
+            </div>
+
+            <div class="field">
+              <label for="categoryId">Rayon</label>
+              <select id="categoryId" name="categoryId">
+                <option value="">Aucun</option>
+                {
+                  categories.map((c) => (
+                    <option value={c.id} selected={product?.categoryId === c.id}>{c.name}</option>
+                  ))
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="division">Activité</label>
+              <select id="division" name="division">
+                <option value="">Aucune</option>
+                {
+                  divisions.map((d) => (
+                    <option value={d.slug} selected={product?.division === d.slug}>{d.name}</option>
+                  ))
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              rows="5"
+              maxlength="5000"
+              placeholder="Ce que le client doit savoir : contenance, origine, usage."
+              set:text={product?.description ?? ''}
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Prix -->
+      <section class="card">
+        <div class="card__head">
+          <div style="flex:1">
+            <h2>Prix</h2>
+            <p>Le prix affiché est le prix payé. Aucun frais ne s’ajoute à la caisse.</p>
+          </div>
+          {margin !== null && <span class="tag tag--plain tag--published">Marge {margin} %</span>}
+        </div>
+
+        <div class="card__body">
+          <div class="form-grid">
+            <div class="field">
+              <label for="price">Prix de vente <span style="color:var(--a-danger)">*</span></label>
+              <div class="input-affix">
+                <input
+                  id="price"
+                  name="price"
+                  class="num"
+                  type="text"
+                  inputmode="numeric"
+                  value={product && product.price > 0 ? formatAmount(product.price) : ''}
+                  required
+                  placeholder="0"
+                />
+                <span class="input-affix__suffix">FCFA</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="comparePrice">Ancien prix</label>
+              <div class="input-affix">
+                <input
+                  id="comparePrice"
+                  name="comparePrice"
+                  class="num"
+                  type="text"
+                  inputmode="numeric"
+                  value={product?.comparePrice ? formatAmount(product.comparePrice) : ''}
+                  placeholder="—"
+                />
+                <span class="input-affix__suffix">FCFA</span>
+              </div>
+              <p class="field__hint">Affiché barré. Seulement s’il a vraiment été pratiqué.</p>
+            </div>
+
+            <div class="field">
+              <label for="cost">Prix d’achat</label>
+              <div class="input-affix">
+                <input
+                  id="cost"
+                  name="cost"
+                  class="num"
+                  type="text"
+                  inputmode="numeric"
+                  value={product?.cost ? formatAmount(product.cost) : ''}
+                  placeholder="—"
+                />
+                <span class="input-affix__suffix">FCFA</span>
+              </div>
+              <p class="field__hint">Pour votre marge. Jamais montré au client.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stock -->
+      <section class="card">
+        <div class="card__head"><h2>Stock et conditionnement</h2></div>
+        <div class="card__body stack">
+          <div class="form-grid">
+            <div class="field">
+              <label for="unit">Unité de vente</label>
+              <input
+                id="unit"
+                name="unit"
+                type="text"
+                list="unites"
+                value={product?.unit ?? 'pièce'}
+                maxlength="40"
+              />
+              <datalist id="unites">
+                {UNITS.map((u) => <option value={u} />)}
+              </datalist>
+            </div>
+
+            <div class="field">
+              <label for="stock">Quantité disponible</label>
+              <input
+                id="stock"
+                name="stock"
+                class="num"
+                type="text"
+                inputmode="numeric"
+                value={String(product?.stock ?? 0)}
+              />
+            </div>
+
+            <div class="field">
+              <label for="lowStockThreshold">Seuil d’alerte</label>
+              <input
+                id="lowStockThreshold"
+                name="lowStockThreshold"
+                class="num"
+                type="text"
+                inputmode="numeric"
+                value={String(product?.lowStockThreshold ?? 5)}
+              />
+              <p class="field__hint">En dessous, l’article remonte au tableau de bord.</p>
+            </div>
+
+            <div class="field">
+              <label for="minQuantity">Commande minimum</label>
+              <input
+                id="minQuantity"
+                name="minQuantity"
+                class="num"
+                type="text"
+                inputmode="numeric"
+                value={String(product?.minQuantity ?? 1)}
+              />
+              <p class="field__hint">Pour la vente en gros.</p>
+            </div>
+          </div>
+
+          <label class="check">
+            <input
+              type="checkbox"
+              name="trackStock"
+              checked={product ? product.trackStock : true}
+            />
+            <span>
+              Suivre le stock
+              <small>
+                Décochez pour un service ou un article toujours disponible : il ne sera
+                jamais marqué épuisé.
+              </small>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Détails -->
+      <section class="card">
+        <div class="card__head"><h2>Détails</h2></div>
+        <div class="card__body">
+          <div class="form-grid">
+            <div class="field">
+              <label for="brand">Marque</label>
+              <input id="brand" name="brand" type="text" value={product?.brand ?? ''} maxlength="120" />
+            </div>
+
+            <div class="field">
+              <label for="origin">Origine</label>
+              <input id="origin" name="origin" type="text" value={product?.origin ?? ''} maxlength="120" />
+            </div>
+
+            <div class="field">
+              <label for="barcode">Code-barres</label>
+              <input id="barcode" name="barcode" type="text" value={product?.barcode ?? ''} maxlength="60" />
+            </div>
+
+            <div class="field">
+              <label for="weightGrams">Poids</label>
+              <div class="input-affix">
+                <input
+                  id="weightGrams"
+                  name="weightGrams"
+                  class="num"
+                  type="text"
+                  inputmode="numeric"
+                  value={product?.weightGrams ? String(product.weightGrams) : ''}
+                  placeholder="—"
+                />
+                <span class="input-affix__suffix">g</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:1rem">
+            <label for="tags">Mots-clés</label>
+            <input
+              id="tags"
+              name="tags"
+              type="text"
+              value={tags.join(', ')}
+              placeholder="riz, gros, sac"
+            />
+            <p class="field__hint">Séparés par des virgules. Aident la recherche en boutique.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Colonne latérale -->
+    <div class="stack">
+      <section class="card">
+        <div class="card__head"><h2>Publication</h2></div>
+        <div class="card__body stack">
+          <div class="field">
+            <label for="status">Statut</label>
+            <select id="status" name="status">
+              <option value="draft" selected={!product || product.status === 'draft'}>
+                Brouillon — invisible en boutique
+              </option>
+              <option value="published" selected={product?.status === 'published'}>
+                En ligne — visible et commandable
+              </option>
+              <option value="archived" selected={product?.status === 'archived'}>
+                Archivé — retiré sans être supprimé
+              </option>
+            </select>
+          </div>
+
+          <label class="check">
+            <input type="checkbox" name="featured" checked={product?.featured ?? false} />
+            <span>
+              Mettre en avant
+              <small>Apparaît en tête de la boutique.</small>
+            </span>
+          </label>
+
+          {
+            product && (
+              <dl class="meta">
+                <dt>Créé</dt>
+                <dd>{formatDateTime(product.createdAt)}</dd>
+                <dt>Modifié</dt>
+                <dd>{timeAgo(product.updatedAt)}</dd>
+                {product.publishedAt && (
+                  <>
+                    <dt>Publié</dt>
+                    <dd>{formatDateTime(product.publishedAt)}</dd>
+                  </>
+                )}
+              </dl>
+            )
+          }
+        </div>
+
+        <div class="card__foot">
+          <button class="btn btn--gold" type="submit">
+            <AdminIcon name="check" size={15} />
+            Enregistrer
+          </button>
+          <a class="btn btn--ghost" href="/admin/produits">Annuler</a>
+        </div>
+      </section>
+
+      <!-- Photos -->
+      {
+        product && (
+          <section class="card" data-photos data-product={product.id}>
+            <div class="card__head">
+              <div style="flex:1">
+                <h2>Photos</h2>
+                <p>La première est la vignette de la boutique.</p>
+              </div>
+            </div>
+
+            <div class="card__body">
+              {product.images.length > 0 && (
+                <div class="photos" style="margin-bottom:1rem">
+                  {product.images.map((image, i) => (
+                    <figure class="photo" data-photo={image.id}>
+                      <img
+                        src={imageUrl(image.filename, image.widths[0])}
+                        srcset={imageSrcset(image.filename, image.widths)}
+                        sizes="160px"
+                        alt={image.alt ?? ''}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      {i === 0 && <span class="photo__badge">Vitrine</span>}
+                      <div class="photo__tools">
+                        {i !== 0 && (
+                          <button class="photo__tool" type="button" data-cover={image.id}>
+                            Mettre en vitrine
+                          </button>
+                        )}
+                        <button
+                          class="photo__tool photo__tool--danger"
+                          type="button"
+                          data-remove={image.id}
+                        >
+                          Retirer
+                        </button>
+                      </div>
+                    </figure>
+                  ))}
+                </div>
+              )}
+
+              <label class="drop" style="padding:1.25rem 1rem" data-photo-drop>
+                <input type="file" accept="image/*" multiple data-photo-input />
+                <div class="drop__icon" style="margin-bottom:0.375rem">
+                  <AdminIcon name="image" size={22} strokeWidth={1.3} />
+                </div>
+                <p style="font-size:0.8125rem">
+                  {product.images.length ? 'Ajouter d’autres photos' : 'Déposer les photos de cet article'}
+                </p>
+              </label>
+
+              <div data-photo-progress style="display:none;margin-top:0.75rem">
+                <div class="bar"><div class="bar__fill" data-photo-bar style="width:0%"></div></div>
+                <p
+                  style="margin:0.375rem 0 0;font-size:0.75rem;color:var(--a-ink-muted)"
+                  data-photo-text
+                />
+              </div>
+            </div>
+          </section>
+        )
+      }
+
+      <!-- Mouvements de stock -->
+      {
+        product && history.length > 0 && (
+          <section class="card">
+            <div class="card__head"><h2>Mouvements de stock</h2></div>
+            <div class="rows">
+              {history.map((movement) => (
+                <div class="row-item">
+                  <div class="row-item__text">
+                    <span class="row-item__title">{reasonLabel[movement.reason] ?? movement.reason}</span>
+                    <span class="row-item__meta">
+                      {timeAgo(movement.createdAt)}
+                      {movement.note ? ` · ${movement.note}` : ''}
+                    </span>
+                  </div>
+                  <span
+                    class="row-item__value"
+                    style={movement.delta >= 0 ? 'color:var(--a-success)' : 'color:var(--a-danger)'}
+                  >
+                    {movement.delta >= 0 ? '+' : ''}{movement.delta}
+                  </span>
+                  <span class="row-item__value" style="color:var(--a-ink-faint);width:3rem">
+                    {movement.stockAfter}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
+        product && (
+          <section class="card">
+            <div class="card__body">
+              <p class="section-label" style="margin-bottom:0.625rem">Autres actions</p>
+              <div class="btn-row">
+                <button class="btn btn--ghost btn--sm" type="button" data-duplicate={product.id}>
+                  <AdminIcon name="copy" size={14} />
+                  Dupliquer
+                </button>
+                <button class="btn btn--danger btn--sm" type="button" data-delete={product.id}>
+                  <AdminIcon name="trash" size={14} />
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </section>
+        )
+      }
+    </div>
+  </form>
+
+  <style>
+    .meta {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.25rem 0.75rem;
+      font-size: 0.8125rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--a-hair-soft);
+    }
+    .meta dt { color: var(--a-ink-faint); }
+    .meta dd { margin: 0; color: var(--a-ink-muted); }
+  </style>
+
+  <script>
+    import '../../../scripts/admin-product-form';
+  </script>
+</AdminLayout>

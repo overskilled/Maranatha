@@ -1,0 +1,116 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminIcon from '../../components/admin/AdminIcon.astro';
+import { listCategories } from '../../lib/repo/products';
+import { divisions } from '../../data/divisions';
+
+const categories = await listCategories();
+const UNITS = ['pièce', 'kg', 'sac', 'carton', 'litre', 'bidon', 'mètre', 'paquet', 'boîte', 'barre', 'feuille', 'seau', 'paire'];
+---
+
+<AdminLayout
+  title="Saisie rapide"
+  subtitle="Pour entrer beaucoup d’articles à la main, sans quitter le clavier"
+>
+  <a class="btn btn--ghost btn--sm" href="/admin/import" slot="actions">
+    <AdminIcon name="upload" size={14} />
+    Importer un fichier
+  </a>
+
+  <div class="stack stack--loose" style="max-width:72rem">
+    <div class="note note--info">
+      <AdminIcon name="info" size={15} />
+      <p>
+        Tapez le nom, le prix, la quantité, puis <strong>Entrée</strong>. L’article est
+        enregistré et le curseur revient au nom, prêt pour le suivant. Le rayon et
+        l’unité restent ceux de la ligne précédente.
+        <br />
+        Pour des centaines d’articles d’un coup, l’<a href="/admin/import">import de fichier</a>
+        reste plus rapide.
+      </p>
+    </div>
+
+    <section class="card">
+      <div class="card__head">
+        <h2>Nouvel article</h2>
+      </div>
+
+      <div class="card__body">
+        <form class="quick" data-quick autocomplete="off">
+          <div class="field">
+            <label for="q-name">Nom de l’article</label>
+            <input id="q-name" name="name" type="text" required placeholder="Riz parfumé 25 kg" autofocus />
+          </div>
+
+          <div class="field">
+            <label for="q-category">Rayon</label>
+            <input id="q-category" name="categoryName" type="text" list="q-rayons" placeholder="Épicerie" />
+            <datalist id="q-rayons">
+              {categories.map((c) => <option value={c.name} />)}
+            </datalist>
+          </div>
+
+          <div class="field">
+            <label for="q-price">Prix</label>
+            <input id="q-price" name="price" class="num" type="text" inputmode="numeric" placeholder="0" />
+          </div>
+
+          <div class="field">
+            <label for="q-stock">Stock</label>
+            <input id="q-stock" name="stock" class="num" type="text" inputmode="numeric" placeholder="0" />
+          </div>
+
+          <div class="field">
+            <label for="q-unit">Unité</label>
+            <input id="q-unit" name="unit" type="text" list="q-unites" value="pièce" />
+            <datalist id="q-unites">
+              {UNITS.map((u) => <option value={u} />)}
+            </datalist>
+          </div>
+
+          <button class="btn btn--gold" type="submit">
+            <AdminIcon name="plus" size={15} />
+            Ajouter
+          </button>
+        </form>
+
+        <div class="btn-row" style="margin-top:1rem;align-items:center">
+          <label class="check">
+            <input type="checkbox" data-publish />
+            <span>Publier directement en boutique</span>
+          </label>
+
+          <span style="width:1px;height:1.25rem;background:var(--a-hair)"></span>
+
+          <label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem">
+            <span style="color:var(--a-ink-muted)">Activité</span>
+            <select data-division style="width:auto">
+              <option value="">Aucune</option>
+              {divisions.map((d) => <option value={d.slug}>{d.shortName}</option>)}
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" data-log-card style="display:none">
+      <div class="card__head">
+        <div style="flex:1">
+          <h2>Ajoutés dans cette session</h2>
+          <p><strong data-log-count>0</strong> article(s)</p>
+        </div>
+        <a class="btn btn--ghost btn--sm" href="/admin/produits?statut=draft">
+          Voir dans la liste
+          <AdminIcon name="chevron-right" size={13} />
+        </a>
+      </div>
+      <div class="quick-log" data-log></div>
+    </section>
+  </div>
+
+  <script>
+    import '../../scripts/admin-quick-add';
+  </script>
+</AdminLayout>

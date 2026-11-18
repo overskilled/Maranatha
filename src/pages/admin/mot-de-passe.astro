@@ -1,0 +1,116 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminIcon from '../../components/admin/AdminIcon.astro';
+import { changePassword, clearSessionCookie } from '../../lib/auth';
+
+const user = Astro.locals.user!;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const current = String(form.get('actuel') ?? '');
+  const next = String(form.get('nouveau') ?? '');
+  const confirm = String(form.get('confirmation') ?? '');
+
+  if (next !== confirm) {
+    error = 'Les deux nouveaux mots de passe ne sont pas identiques.';
+  } else {
+    const result = await changePassword(user.id, current, next);
+    if (result.ok) {
+      // Toutes les sessions tombent : il faut se reconnecter.
+      clearSessionCookie(Astro.cookies);
+      return Astro.redirect(
+        `/admin/connexion?message=${encodeURIComponent('Mot de passe changé. Reconnectez-vous.')}`,
+        303,
+      );
+    }
+    error = result.error;
+  }
+}
+---
+
+<AdminLayout title="Mot de passe" subtitle="Changer votre mot de passe d’accès">
+  <div style="max-width:30rem">
+    {
+      user.mustChangePassword && (
+        <div class="note note--warning" style="margin-bottom:1.25rem">
+          <AdminIcon name="alert" size={16} />
+          <p>
+            <strong>Premier accès.</strong> Choisissez votre propre mot de passe avant
+            de continuer. Celui qui vous a été donné à l’installation ne doit pas rester.
+          </p>
+        </div>
+      )
+    }
+
+    {
+      error && (
+        <div class="note note--danger" style="margin-bottom:1.25rem" role="alert">
+          <AdminIcon name="alert" size={16} />
+          <p>{error}</p>
+        </div>
+      )
+    }
+
+    <section class="card">
+      <form method="POST" class="card__body stack">
+        <div class="field">
+          <label for="actuel">Mot de passe actuel</label>
+          <input
+            id="actuel"
+            name="actuel"
+            type="password"
+            autocomplete="current-password"
+            required
+            autofocus
+          />
+        </div>
+
+        <div class="field">
+          <label for="nouveau">Nouveau mot de passe</label>
+          <input
+            id="nouveau"
+            name="nouveau"
+            type="password"
+            autocomplete="new-password"
+            minlength="10"
+            required
+          />
+          <p class="field__hint">
+            Au moins 10 caractères. Une phrase dont vous vous souvenez vaut mieux
+            qu’un mot compliqué que vous devrez noter.
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="confirmation">Répéter le nouveau mot de passe</label>
+          <input
+            id="confirmation"
+            name="confirmation"
+            type="password"
+            autocomplete="new-password"
+            minlength="10"
+            required
+          />
+        </div>
+
+        <div class="note note--info">
+          <AdminIcon name="info" size={15} />
+          <p>
+            Après le changement, vous serez déconnectée de tous vos appareils et
+            devrez vous reconnecter.
+          </p>
+        </div>
+
+        <div>
+          <button class="btn btn--gold" type="submit">
+            <AdminIcon name="lock" size={15} />
+            Changer le mot de passe
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</AdminLayout>

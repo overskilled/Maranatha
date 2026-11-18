@@ -1,0 +1,282 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminIcon from '../../../components/admin/AdminIcon.astro';
+import { db } from '../../../lib/db';
+import { importJobs, importProfiles } from '../../../lib/db/schema';
+import { desc } from 'drizzle-orm';
+import { formatDateTime, timeAgo } from '../../../lib/text';
+import { formatAmount } from '../../../lib/money';
+
+const [history, profiles] = await Promise.all([
+  db.select().from(importJobs).orderBy(desc(importJobs.createdAt)).limit(12),
+  db.select().from(importProfiles).orderBy(desc(importProfiles.lastUsedAt)).limit(10),
+]);
+
+const statusLabel: Record<string, string> = {
+  analyse: 'En analyse',
+  pret: 'Prêt, non appliqué',
+  en_cours: 'En cours',
+  termine: 'Terminé',
+  echoue: 'Échoué',
+  annule: 'Annulé',
+};
+
+const statusTag: Record<string, string> = {
+  analyse: 'draft',
+  pret: 'nouvelle',
+  en_cours: 'confirmee',
+  termine: 'published',
+  echoue: 'annulee',
+  annule: 'archived',
+};
+---
+
+<AdminLayout
+  title="Import en lot"
+  subtitle="Publier ou mettre à jour tout un catalogue depuis un fichier Excel ou CSV"
+>
+  <a class="btn btn--ghost btn--sm" href="/api/admin/import/modele" slot="actions" download>
+    <AdminIcon name="download" size={14} />
+    Modèle de fichier
+  </a>
+
+  <div class="stack stack--loose">
+    <!-- Dépôt -->
+    <section class="card">
+      <div class="card__body">
+        <label class="drop" data-drop>
+          <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.xltx" data-file />
+          <div class="drop__icon">
+            <AdminIcon name="upload" size={30} strokeWidth={1.3} />
+          </div>
+          <h3>Déposez votre fichier ici</h3>
+          <p>
+            Excel (.xlsx) ou CSV, jusqu’à 25 Mo. Les colonnes sont reconnues
+            automatiquement — vous pourrez vérifier et corriger avant que
+            quoi que ce soit ne soit écrit.
+          </p>
+          <span class="btn btn--ghost btn--sm" style="margin-top:1rem">
+            <AdminIcon name="file" size={14} />
+            Choisir un fichier
+          </span>
+        </label>
+
+        <div data-upload-state style="display:none;margin-top:1rem">
+          <div class="note note--info">
+            <AdminIcon name="clock" size={15} />
+            <p><strong data-upload-name></strong><br /><span data-upload-text>Lecture du fichier…</span></p>
+          </div>
+          <div class="bar" style="margin-top:0.625rem">
+            <div class="bar__fill" data-upload-bar style="width:30%"></div>
+          </div>
+        </div>
+
+        <div data-upload-error style="display:none;margin-top:1rem"></div>
+      </div>
+    </section>
+
+    <!-- Comment ça marche -->
+    <section class="card">
+      <div class="card__head">
+        <h2>Comment se passe un import</h2>
+      </div>
+      <div class="card__body">
+        <ol class="howto">
+          <li>
+            <strong>Vous déposez le fichier.</strong>
+            Les en-têtes sont lus et rapprochés des champs d’un article.
+            Rien n’est encore enregistré.
+          </li>
+          <li>
+            <strong>Vous vérifiez la correspondance.</strong>
+            Chaque colonne de votre fichier est associée à un champ — prix,
+            stock, rayon — et vous pouvez corriger ce qui a été mal deviné.
+          </li>
+          <li>
+            <strong>Vous lisez l’aperçu.</strong>
+            Combien d’articles seront créés, combien mis à jour, et quelles
+            lignes posent problème, ligne par ligne.
+          </li>
+          <li>
+            <strong>Vous appliquez.</strong>
+            Les articles arrivent en brouillon par défaut. Vous les relisez,
+            puis vous publiez tout d’un coup depuis la liste des articles.
+          </li>
+        </ol>
+
+        <div class="note note--info" style="margin-top:1.125rem">
+          <AdminIcon name="info" size={15} />
+          <p>
+            <strong>La référence est la clé.</strong> Un article dont la référence
+            existe déjà est mis à jour, pas dupliqué. C’est ce qui permet de
+            redéposer le même fichier chaque mois pour n’actualiser que les
+            prix et les stocks.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {
+      profiles.length > 0 && (
+        <section class="card">
+          <div class="card__head">
+            <div style="flex:1">
+              <h2>Vos modèles de fichier</h2>
+              <p>Correspondances enregistrées, réappliquées en un clic au prochain dépôt.</p>
+            </div>
+          </div>
+          <div class="rows">
+            {profiles.map((profile) => (
+              <div class="row-item">
+                <AdminIcon name="table" size={16} />
+                <div class="row-item__text">
+                  <span class="row-item__title">{profile.name}</span>
+                  <span class="row-item__meta">
+                    {Object.values(profile.mapping ?? {}).filter(Boolean).length} colonnes associées
+                    {profile.lastUsedAt ? ` · utilisé ${timeAgo(profile.lastUsedAt)}` : ''}
+                  </span>
+                </div>
+                <button
+                  class="btn btn--quiet btn--sm"
+                  type="button"
+                  data-delete-profile={profile.id}
+                  aria-label={`Supprimer le modèle ${profile.name}`}
+                >
+                  <AdminIcon name="trash" size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <!-- Historique -->
+    <section class="card">
+      <div class="card__head">
+        <h2>Imports précédents</h2>
+      </div>
+
+      {
+        history.length === 0 ? (
+          <div class="card__body">
+            <p style="margin:0;font-size:0.875rem;color:var(--a-ink-muted)">
+              Aucun import pour l’instant.
+            </p>
+          </div>
+        ) : (
+          <div class="table-wrap">
+            <table class="data stackable">
+              <thead>
+                <tr>
+                  <th>Fichier</th>
+                  <th>Date</th>
+                  <th class="num">Lignes</th>
+                  <th class="num">Créés</th>
+                  <th class="num">Mis à jour</th>
+                  <th class="num">Problèmes</th>
+                  <th>État</th>
+                  <th class="tight"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((job) => (
+                  <tr>
+                    <td class="cell-span">
+                      <span style="font-weight:500">{job.filename}</span>
+                    </td>
+                    <td data-label="Date" style="color:var(--a-ink-muted);font-size:0.8125rem">
+                      {formatDateTime(job.createdAt)}
+                    </td>
+                    <td class="num" data-label="Lignes">{formatAmount(job.totalRows)}</td>
+                    <td class="num" data-label="Créés">
+                      {job.createdCount > 0 ? formatAmount(job.createdCount) : '—'}
+                    </td>
+                    <td class="num" data-label="Mis à jour">
+                      {job.updatedCount > 0 ? formatAmount(job.updatedCount) : '—'}
+                    </td>
+                    <td class="num" data-label="Problèmes">
+                      {job.errorCount > 0 ? (
+                        <span style="color:var(--a-danger);font-weight:600">{job.errorCount}</span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td data-label="État">
+                      <span class:list={['tag', `tag--${statusTag[job.status]}`]}>
+                        {statusLabel[job.status]}
+                      </span>
+                    </td>
+                    <td class="tight">
+                      <div style="display:flex;gap:0.25rem;justify-content:flex-end">
+                        {(job.errors?.length ?? 0) > 0 && (
+                          <a
+                            class="btn btn--quiet btn--sm"
+                            href={`/api/admin/import/erreurs?id=${job.id}`}
+                            download
+                            aria-label="Télécharger le rapport"
+                          >
+                            <AdminIcon name="download" size={14} />
+                          </a>
+                        )}
+                        {(job.status === 'pret' || job.status === 'en_cours') && (
+                          <a class="btn btn--ghost btn--sm" href={`/admin/import/${job.id}`}>
+                            Reprendre
+                          </a>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+    </section>
+  </div>
+
+  <style>
+    .howto {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: step;
+      display: grid;
+      gap: 0.875rem;
+    }
+
+    .howto li {
+      counter-increment: step;
+      position: relative;
+      padding-left: 2.125rem;
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: var(--a-ink-muted);
+    }
+
+    .howto li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0.0625rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      background: var(--a-night);
+      color: var(--a-ivory);
+      display: grid;
+      place-items: center;
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .howto strong { color: var(--a-ink); font-weight: 600; }
+  </style>
+
+  <script>
+    import '../../../scripts/admin-import-upload';
+  </script>
+</AdminLayout>

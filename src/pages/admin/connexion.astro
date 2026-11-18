@@ -1,0 +1,135 @@
+---
+export const prerender = false;
+
+import '../../styles/admin.css';
+import AdminIcon from '../../components/admin/AdminIcon.astro';
+import { site } from '../../data/site';
+import { login, setSessionCookie } from '../../lib/auth';
+
+let error: string | null = null;
+let email = '';
+
+const suite = Astro.url.searchParams.get('suite') ?? '/admin';
+/** On ne redirige que vers une adresse interne. */
+const safeSuite = suite.startsWith('/admin') && !suite.startsWith('//') ? suite : '/admin';
+
+// Déjà connectée : on l'emmène directement au travail.
+if (Astro.locals.user) {
+  return Astro.redirect(safeSuite, 302);
+}
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  email = String(form.get('email') ?? '').trim();
+  const password = String(form.get('motdepasse') ?? '');
+
+  const result = await login(email, password, {
+    userAgent: Astro.request.headers.get('user-agent'),
+    ip:
+      Astro.request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      Astro.clientAddress,
+  });
+
+  if (result.ok) {
+    setSessionCookie(Astro.cookies, result.token, result.expiresAt);
+    return Astro.redirect(safeSuite, 302);
+  }
+  error = result.error;
+}
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connexion · Back-office {site.shortName}</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0B1526" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      @font-face {
+        font-family: "Arimo";
+        src: url("/fonts/arimo-latin-var.woff2") format("woff2");
+        font-weight: 400 700;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Serif";
+        src: url("/fonts/ibm-plex-serif-500-latin.woff2") format("woff2");
+        font-weight: 500;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Serif";
+        src: url("/fonts/ibm-plex-serif-400-italic-latin.woff2") format("woff2");
+        font-weight: 400;
+        font-style: italic;
+        font-display: swap;
+      }
+    </style>
+  </head>
+
+  <body class="admin">
+    <main class="login">
+      <div class="login__card">
+        <div class="login__brand">
+          <img src="/logo-mark.svg" alt="" width="34" height="34" />
+          <span>
+            {site.shortName}
+            <em>{site.signature}</em>
+          </span>
+        </div>
+
+        <h1>Back-office</h1>
+        <p>Gestion du catalogue et des commandes.</p>
+
+        {
+          error && (
+            <div class="note note--danger" style="margin-bottom:1rem" role="alert">
+              <AdminIcon name="alert" size={16} />
+              <p>{error}</p>
+            </div>
+          )
+        }
+
+        <form method="POST" class="stack stack--tight" novalidate>
+          <div class="field">
+            <label for="email">Adresse e-mail</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={email}
+              autocomplete="username"
+              inputmode="email"
+              required
+              autofocus
+            />
+          </div>
+
+          <div class="field">
+            <label for="motdepasse">Mot de passe</label>
+            <input
+              id="motdepasse"
+              name="motdepasse"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <button class="btn btn--gold btn--block" type="submit" style="margin-top:0.375rem">
+            <AdminIcon name="lock" size={15} />
+            Entrer
+          </button>
+        </form>
+
+        <blockquote class="login__scripture">
+          {site.scripture.text}
+          <cite>{site.scripture.reference}</cite>
+        </blockquote>
+      </div>
+    </main>
+  </body>
+</html>

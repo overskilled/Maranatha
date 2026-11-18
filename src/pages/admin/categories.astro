@@ -1,0 +1,141 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminIcon from '../../components/admin/AdminIcon.astro';
+import { listCategories } from '../../lib/repo/products';
+import { divisions } from '../../data/divisions';
+import { plural } from '../../lib/text';
+
+const categories = await listCategories();
+const divisionName = Object.fromEntries(divisions.map((d) => [d.slug, d.name]));
+---
+
+<AdminLayout
+  title="Rayons"
+  subtitle="Les familles d’articles de la boutique"
+>
+  <div class="grid grid--split" style="align-items:start">
+    <section class="card">
+      <div class="card__head">
+        <div style="flex:1">
+          <h2>Tous les rayons</h2>
+          <p>{categories.length === 0 ? 'Aucun rayon' : plural(categories.length, 'rayon')}</p>
+        </div>
+      </div>
+
+      {
+        categories.length === 0 ? (
+          <div class="empty" style="padding:2.5rem 1rem">
+            <h3>Aucun rayon</h3>
+            <p>
+              Les rayons regroupent les articles en vitrine. Ils se créent aussi
+              tout seuls pendant un import.
+            </p>
+          </div>
+        ) : (
+          <div class="table-wrap">
+            <table class="data stackable">
+              <thead>
+                <tr>
+                  <th>Rayon</th>
+                  <th>Activité</th>
+                  <th class="num">Articles</th>
+                  <th class="tight"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  categories.map((category) => (
+                    <tr data-category={category.id}>
+                      <td class="cell-span">
+                        <span style="font-weight:500;display:block">{category.name}</span>
+                        <span class="cell-main__meta">/{category.slug}</span>
+                      </td>
+                      <td data-label="Activité" style="font-size:0.8125rem;color:var(--a-ink-muted)">
+                        {category.division ? (divisionName[category.division] ?? category.division) : '—'}
+                      </td>
+                      <td class="num" data-label="Articles">
+                        {category.productCount > 0 ? (
+                          <a href={`/admin/produits?rayon=${category.id}`} style="text-decoration:none">
+                            {category.productCount}
+                          </a>
+                        ) : (
+                          <span style="color:var(--a-ink-faint)">0</span>
+                        )}
+                      </td>
+                      <td class="tight">
+                        <div style="display:flex;gap:0.125rem;justify-content:flex-end">
+                          <button
+                            class="btn btn--quiet btn--sm"
+                            type="button"
+                            data-rename={category.id}
+                            data-name={category.name}
+                            aria-label={`Renommer ${category.name}`}
+                          >
+                            <AdminIcon name="edit" size={14} />
+                          </button>
+                          <button
+                            class="btn btn--quiet btn--sm"
+                            type="button"
+                            data-remove={category.id}
+                            data-name={category.name}
+                            data-count={category.productCount}
+                            aria-label={`Supprimer ${category.name}`}
+                          >
+                            <AdminIcon name="trash" size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+    </section>
+
+    <section class="card">
+      <div class="card__head"><h2>Nouveau rayon</h2></div>
+      <form class="card__body stack" data-new-category>
+        <div class="field">
+          <label for="cat-name">Nom</label>
+          <input id="cat-name" name="name" type="text" required maxlength="120" placeholder="Épicerie" />
+        </div>
+
+        <div class="field">
+          <label for="cat-division">Activité de la maison</label>
+          <select id="cat-division" name="division">
+            <option value="">Aucune</option>
+            {divisions.map((d) => <option value={d.slug}>{d.name}</option>)}
+          </select>
+          <p class="field__hint">Relie le rayon à l’une des six activités du site.</p>
+        </div>
+
+        <div class="field">
+          <label for="cat-description">Description</label>
+          <textarea
+            id="cat-description"
+            name="description"
+            rows="3"
+            maxlength="600"
+            placeholder="Affichée en tête du rayon en boutique."
+          />
+        </div>
+
+        <div>
+          <button class="btn btn--gold" type="submit">
+            <AdminIcon name="plus" size={15} />
+            Créer le rayon
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <script>
+    import '../../scripts/admin-categories';
+  </script>
+</AdminLayout>
