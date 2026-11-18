@@ -27,6 +27,7 @@ calculés à la demande.
 Astro 7 (output: static + adapter node)
 ├── SQLite (better-sqlite3) + Drizzle ORM     une base = un fichier
 ├── sharp                                     photos → WebP 400/800/1600
+├── Stockage photos : disque ou Cloudflare R2 au choix, même interface
 ├── Sessions maison (scrypt + cookie)         aucun service externe
 └── CinetPay (optionnel)                      MTN MoMo, Orange Money
 ```
@@ -132,9 +133,12 @@ docker compose cp app:/data/sauvegardes/jour.db ./
 docker compose cp app:/data/uploads ./uploads-sauvegarde
 ```
 
-`sauvegarde` copie la base à chaud, sans arrêter le serveur. **Copier
-aussi `uploads/`** : la base ne contient pas les photos, seulement leurs
-noms.
+`sauvegarde` copie la base à chaud, sans arrêter le serveur.
+
+**Si les photos sont sur le disque**, copier aussi `uploads/` : la base
+ne contient pas les photos, seulement leurs noms. **Si elles sont sur
+R2**, le bucket est déjà répliqué par Cloudflare et seule la base doit
+être sauvegardée — mais elle, impérativement.
 
 Une tâche quotidienne suffit :
 
@@ -150,6 +154,55 @@ certificats montés.
 
 ---
 
+## Les photos du catalogue
+
+Deux pilotes derrière la même interface (`src/lib/storage.ts`). Le reste
+du code ne sait pas lequel tourne.
+
+**Disque** (par défaut). Rien à configurer. Les rendus vont dans
+`DATA_DIR/uploads`, nginx les sert depuis le volume. Suffisant pour une
+boutique, mais le volume devient indispensable à la sauvegarde.
+
+**Cloudflare R2** (dès que les variables `R2_*` sont renseignées). Les
+rendus partent dans un bucket et sont servis par le réseau de
+Cloudflare : ils ne passent plus par le serveur, l'egress est gratuit,
+et ils survivent à un redéploiement même sans volume.
+
+L'installation actuelle écrit dans le bucket partagé `mbokofit`, sous le
+dossier `maranatha/`, servi par `https://exercices.mbokofit.com`. Le
+bucket héberge déjà `bbo/` et `exercises/` — un dossier par projet.
+
+```
+maranatha/<reference>-<suffixe>-<largeur>.webp
+```
+
+Le suffixe est unique, donc le cache est posé à un an en `immutable`.
+Rien n'est jamais réécrit : une photo remplacée reçoit un nouveau nom.
+
+**Pour basculer une boutique qui tourne déjà**, renseigner les `R2_*`
+puis lancer une fois :
+
+```bash
+node scripts/outil.mjs photos-vers-r2          # essai à blanc
+node scripts/outil.mjs photos-vers-r2 --vrai   # envoi réel
+```
+
+Rien n'est supprimé du disque. Les anciens liens `/media/...` renvoient
+en 301 vers le CDN, donc aucune page ne casse pendant la bascule.
+
+**Un domaine propre.** `R2_PUBLIC_URL` est la seule chose à changer pour
+servir les images depuis `images.maranatha-le-juste-prix.com` plutôt que
+depuis le domaine de MbokoFit : lier le domaine au bucket dans le
+tableau de bord Cloudflare (R2 → Settings → Custom Domains), puis
+remplacer la variable. Aucun changement de code, et les clés restent
+identiques.
+
+> Le jeton d'API Cloudflare en place est limité à R2 : il ne voit aucune
+> zone DNS, donc il ne peut ni créer un enregistrement ni lier un
+> domaine. Cette étape se fait à la main dans le tableau de bord.
+
+---
+
 ## Configuration
 
 Tout est dans `.env` (voir `.env.example`).
@@ -160,6 +213,7 @@ Tout est dans `.env` (voir `.env.example`).
 | `OWNER_EMAIL` / `OWNER_PASSWORD` | Crée le premier compte au démarrage, s'il n'en existe aucun. Mot de passe à changer à la première connexion. |
 | `DATA_DIR` | Où vivent la base et les photos. `/data` en conteneur. |
 | `DELIVERY_FEE`, `FREE_DELIVERY_FROM` | Valeurs de départ, ensuite réglables dans le back-office. |
+| `R2_*` | Photos sur Cloudflare R2. Toutes vides : les photos restent sur le disque. |
 | `CINETPAY_*` | Paiement mobile. Inactif tant que `CINETPAY_ENABLED=false`. |
 | `WHATSAPP_NUMBER` | Numéro qui reçoit les commandes WhatsApp. |
 | `PUBLIC_URL` | Adresse publique, pour les retours de paiement. |
@@ -245,6 +299,12 @@ leurs noms de tables en toutes lettres.
 **Le stock se décrémente une seule fois.** La colonne `stock_applied`
 d'une commande dit si le prélèvement a eu lieu. Une annulation rend le
 stock et remet le drapeau à zéro ; une réouverture le reprend.
+
+**Le `.env` n'est pas lu tout seul.** Astro expose `.env` sur
+`import.meta.env`, pas sur `process.env`. `src/lib/env.ts` le charge
+donc lui-même au démarrage, sans écraser ce qui vient déjà de
+l'environnement : en production c'est le conteneur qui décide, jamais un
+fichier oublié dans l'image.
 
 **Les montants sont des entiers.** Le franc CFA ne se divise pas. Aucun
 flottant, aucun arrondi caché : le prix affiché est le prix payé, et le

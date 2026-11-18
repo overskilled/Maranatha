@@ -5,12 +5,11 @@
    à charger sur une connexion mobile.
    ============================================================ */
 
-import { mkdir, writeFile, unlink, readFile, stat } from 'node:fs/promises';
-import { join, extname, basename } from 'node:path';
+import { extname, basename } from 'node:path';
 import sharp from 'sharp';
-import { env } from './env';
 import { slugify, skuify } from './text';
 import { newId } from './ids';
+import { storage } from './storage';
 
 /** Largeurs produites. La vignette du back-office utilise la première. */
 export const WIDTHS = [400, 800, 1600] as const;
@@ -47,10 +46,6 @@ export function isAcceptedImage(file: { type?: string; name?: string }): boolean
   return ACCEPTED_EXT.has(ext);
 }
 
-async function ensureDir(): Promise<void> {
-  await mkdir(env.uploadsDir, { recursive: true });
-}
-
 /**
  * Traite une photo et écrit ses rendus.
  *
@@ -67,8 +62,6 @@ export async function processImage(
       `La photo pèse ${Math.round(input.byteLength / 1024 / 1024)} Mo, la limite est de ${MAX_BYTES / 1024 / 1024} Mo.`,
     );
   }
-
-  await ensureDir();
 
   // `failOn: 'none'` : une photo légèrement abîmée passe quand même.
   const image = sharp(input, { failOn: 'none' }).rotate();
@@ -96,7 +89,7 @@ export async function processImage(
       .webp({ quality: width >= 1600 ? 76 : 82, effort: 4 })
       .toBuffer();
 
-    await writeFile(join(env.uploadsDir, `${filename}-${width}.webp`), buffer);
+    await storage.put(`${filename}-${width}.webp`, buffer);
     bytes += buffer.byteLength;
     written.push(width);
   }
@@ -122,38 +115,30 @@ export async function processImage(
   };
 }
 
-/** Supprime tous les rendus d'une photo. */
+/** Supprime tous les rendus d'une photo, où qu'ils soient rangés. */
 export async function deleteImage(
   filename: string,
   widths: number[] = [...WIDTHS],
 ): Promise<void> {
   const safe = basename(filename).replace(/[^a-z0-9-]/gi, '');
   if (!safe) return;
-  await Promise.all(
-    widths.map((w) =>
-      unlink(join(env.uploadsDir, `${safe}-${w}.webp`)).catch(() => {}),
-    ),
-  );
+  await storage.remove(widths.map((w) => `${safe}-${w}.webp`));
 }
 
 /** Lit un rendu pour le servir. Refuse toute sortie du dossier. */
 export async function readRendition(
   name: string,
 ): Promise<{ body: Buffer; bytes: number } | null> {
-  if (!/^[a-z0-9-]+\.webp$/i.test(name)) return null;
-  const path = join(env.uploadsDir, basename(name));
-  try {
-    const info = await stat(path);
-    if (!info.isFile()) return null;
-    return { body: await readFile(path), bytes: info.size };
-  } catch {
-    return null;
-  }
+  return storage.read(name);
 }
 
-/** URL publique d'un rendu. */
+/**
+ * Adresse publique d'un rendu.
+ * Sur R2 avec un domaine public, elle pointe directement vers le
+ * réseau de Cloudflare ; sinon vers /media, servi par le serveur.
+ */
 export function imageUrl(filename: string, width: number): string {
-  return `/media/${filename}-${width}.webp`;
+  return storage.url(`${filename}-${width}.webp`);
 }
 
 /** Attribut srcset complet. */

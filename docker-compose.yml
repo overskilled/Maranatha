@@ -4,8 +4,9 @@
 #   cp .env.example .env     puis compléter
 #   docker compose up -d --build
 #
-# Les données — base, photos, fichiers d'import — vivent dans le
-# volume « donnees ». Sauvegarder le site, c'est copier ce volume.
+# Les données vivent dans le volume « donnees » : la base, les fichiers
+# d'import, et les photos tant que Cloudflare R2 n'est pas configuré.
+# Avec R2, seule la base reste locale — mais elle, il faut la sauvegarder.
 # ============================================================
 
 services:

@@ -6,6 +6,7 @@
      node scripts/outil.mjs demo              jeu d'essai (catalogue + commandes)
      node scripts/outil.mjs vider-demo        retire le jeu d'essai
      node scripts/outil.mjs sauvegarde [chemin]
+     node scripts/outil.mjs photos-vers-r2 [--vrai]
      node scripts/outil.mjs etat
 
    Volontairement sans dépendance au code de l'application : cet
@@ -384,6 +385,112 @@ async function backup(db, [target]) {
   console.log('Pensez à copier aussi le dossier des photos (data/uploads).');
 }
 
+/**
+ * Envoie vers R2 les rendus encore rangés sur le disque.
+ *
+ * À lancer une fois, après avoir renseigné les variables R2 : sans
+ * cela, les photos déjà en base pointeraient vers un bucket où elles
+ * n'existent pas. Rien n'est supprimé du disque — on vérifie d'abord
+ * que tout est en ligne.
+ */
+async function photosVersR2(db, args) {
+  const apply = args.includes('--vrai');
+
+  // Lire la configuration sans dépendre du code de l'application.
+  const env = {};
+  for (const file of ['.env', '.env.local']) {
+    if (!existsSync(file)) continue;
+    for (const line of readFileSync(file, 'utf8').split('\n')) {
+      const t = line.trim();
+      if (!t || t.startsWith('#') || !t.includes('=')) continue;
+      const [k, ...rest] = t.split('=');
+      const key = k.trim();
+      if (env[key] === undefined) env[key] = rest.join('=').trim().replace(/^["']|["']$/g, '');
+    }
+  }
+  for (const key of Object.keys(env)) {
+    if (process.env[key] !== undefined) env[key] = process.env[key];
+  }
+
+  if (!env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY || !env.R2_BUCKET) {
+    console.error('R2 n\'est pas configuré : renseignez R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY et R2_BUCKET dans .env.');
+    process.exit(1);
+  }
+
+  const uploadsDir = resolve(env.UPLOADS_DIR ?? join(DATA_DIR, 'uploads'));
+  const prefix = (env.R2_PREFIX ?? 'maranatha').replace(/^\/+|\/+$/g, '');
+
+  const { S3Client, PutObjectCommand, HeadObjectCommand } = await import('@aws-sdk/client-s3');
+  const s3 = new S3Client({
+    region: 'auto',
+    endpoint: env.R2_ENDPOINT || `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+
+  const rows = db.prepare('select filename, widths from product_images').all();
+  const wanted = [];
+  for (const row of rows) {
+    let widths = [400, 800, 1600];
+    try {
+      widths = JSON.parse(row.widths);
+    } catch {
+      /* largeurs par défaut */
+    }
+    for (const w of widths) wanted.push(`${row.filename}-${w}.webp`);
+  }
+
+  console.log(`${rows.length} photo(s) en base, ${wanted.length} rendu(s) attendus.`);
+  if (!apply) console.log('Essai à blanc. Ajoutez --vrai pour envoyer réellement.\n');
+
+  let sent = 0;
+  let already = 0;
+  let absent = 0;
+
+  for (const name of wanted) {
+    const key = prefix ? `${prefix}/${name}` : name;
+
+    // Déjà en ligne ? On n'y touche pas.
+    try {
+      await s3.send(new HeadObjectCommand({ Bucket: env.R2_BUCKET, Key: key }));
+      already += 1;
+      continue;
+    } catch {
+      /* absent du bucket, on continue */
+    }
+
+    const path = join(uploadsDir, name);
+    if (!existsSync(path)) {
+      absent += 1;
+      console.log(`  manquant des deux côtés : ${name}`);
+      continue;
+    }
+
+    if (apply) {
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: env.R2_BUCKET,
+          Key: key,
+          Body: readFileSync(path),
+          ContentType: 'image/webp',
+          CacheControl: 'public, max-age=31536000, immutable',
+        }),
+      );
+    }
+    sent += 1;
+  }
+
+  console.log(`\n${apply ? 'Envoyés' : 'À envoyer'} : ${sent}`);
+  console.log(`Déjà sur R2    : ${already}`);
+  if (absent) console.log(`Introuvables   : ${absent}  (ces fiches resteront sans photo)`);
+
+  if (apply && sent > 0) {
+    console.log('\nVérifiez la boutique, puis le dossier local peut être archivé.');
+  }
+}
+
 function status(db) {
   const one = (sql) => Object.values(db.prepare(sql).get() ?? {})[0] ?? 0;
 
@@ -410,6 +517,7 @@ try {
     case 'demo': seedDemo(db); break;
     case 'vider-demo': clearDemo(db); break;
     case 'sauvegarde': await backup(db, args); break;
+    case 'photos-vers-r2': await photosVersR2(db, args); break;
     case 'etat': status(db); break;
     default:
       console.log(`Outil Maranatha Le Juste Prix
@@ -425,6 +533,10 @@ try {
 
   sauvegarde [chemin]
       Copie la base à chaud, sans arrêter le serveur.
+
+  photos-vers-r2 [--vrai]
+      Envoie vers Cloudflare R2 les photos encore sur le disque.
+      Sans --vrai, montre seulement ce qui serait envoyé.
 
   etat
       Résumé de ce que contient la base.

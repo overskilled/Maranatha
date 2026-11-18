@@ -7,7 +7,8 @@
 import { defineMiddleware } from 'astro:middleware';
 import { resolveSession, SESSION_COOKIE, ensureOwner, pruneAuthTables } from './lib/auth';
 import { readCart, cartCount } from './lib/cart';
-import { configWarnings } from './lib/env';
+import { configWarnings, env } from './lib/env';
+import { storage } from './lib/storage';
 
 /** Chemins du back-office ouverts sans session. */
 const PUBLIC_ADMIN = new Set([
@@ -25,6 +26,22 @@ async function bootstrap(): Promise<void> {
 
   for (const warning of configWarnings()) {
     console.warn(`[config] ${warning}`);
+  }
+
+  // Dire où vont les photos, et le vérifier tout de suite : une
+  // erreur de configuration doit se voir au démarrage, pas au
+  // premier dépôt de photo.
+  const where =
+    storage.driver === 'r2'
+      ? `Cloudflare R2 — bucket « ${env.r2.bucket} », dossier « ${env.r2.prefix}/ »`
+      : `disque du serveur — ${env.uploadsDir}`;
+  console.log(`[photos] ${where}`);
+
+  const reachable = await storage.check();
+  if (!reachable.ok) {
+    console.error(`[photos] ${reachable.error}`);
+  } else if (storage.driver === 'r2' && env.r2.publicUrl) {
+    console.log(`[photos] servies par ${env.r2.publicUrl}/${env.r2.prefix}/`);
   }
 
   try {
