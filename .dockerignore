@@ -1,13 +1,14 @@
-# Keep the build context small — only source needed to build the site is copied
 node_modules
 dist
 .astro
 .git
 .gitignore
-.dockerignore
-images-src
-.DS_Store
-*.log
 .env
 .env.*
-Dockerfile
+!.env.example
+data
+images-src
+*.log
+.DS_Store
+.playwright-mcp
+README*.md
